@@ -134,9 +134,9 @@ export default function ProfilePage() {
 
       {/* Create/Edit Modal */}
       {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => { setModalMode(null); setEditingProfile(null); }} />
-          <div className="relative w-full max-w-[480px] mx-auto bg-white rounded-t-3xl px-5 pt-5 pb-8 animate-fade-up">
+          <div className="relative w-full max-w-[480px] mx-auto bg-white rounded-3xl px-5 pt-5 pb-8 animate-fade-up max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-display text-xl font-semibold">
                 {modalMode === 'create' ? 'Add Profile' : 'Edit Profile'}

@@ -13,7 +13,6 @@ export async function getBiomarkerTrend(
   next: NextFunction
 ): Promise<void> {
   try {
-    const userId = req.user!.id;
     const profileId = req.query.profile_id as string;
     const biomarkerName = req.query.biomarker as string;
 

@@ -52,7 +52,7 @@ app.get('/health', async (_req, res) => {
   try {
     // Check database connectivity
     const { supabaseAdmin } = await import('./services/supabase.service');
-    const { data, error } = await supabaseAdmin.from('profiles').select('id').limit(1);
+    const { error } = await supabaseAdmin.from('profiles').select('id').limit(1);
     health.services.database = error ? 'error' : 'ok';
   } catch (error) {
     health.services.database = 'error';

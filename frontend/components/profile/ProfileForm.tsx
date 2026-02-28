@@ -58,7 +58,7 @@ export function ProfileForm({ profile, onSubmit, onCancel, isLoading }: ProfileF
         <div className="flex gap-3">
           {GENDER_OPTIONS.map((o) => (
             <label key={o.value} className="flex-1 cursor-pointer">
-              <input type="radio" value={o.value} {...register('gender')} className="sr-only" />
+              <input type="radio" value={o.value} {...register('gender')} className="peer sr-only" />
               <div className={cn(
                 'text-center py-2.5 rounded-xl border text-sm font-medium transition-colors',
                 'peer-checked:border-primary-400 peer-checked:bg-primary-50 peer-checked:text-primary-700',

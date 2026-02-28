@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import * as notificationController from '../controllers/notification';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
 import { updateNotificationPreferencesSchema } from '../validations/notification.validations';
 
-const router = Router();
+const router: RouterType = Router();
 
 // GET /api/settings/notifications - Get notification preferences
 router.get(

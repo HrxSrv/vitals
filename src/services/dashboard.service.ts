@@ -16,12 +16,17 @@ export interface BiomarkerWithStatus extends BiomarkerWithDefinition {
   status: BiomarkerStatusType;
 }
 
+export interface DashboardSummary {
+  totalReports: number;
+  latestReportDate: string | null;
+  biomarkerCount: number;
+}
+
 export interface DashboardData {
   profile: Profile;
-  lhm: LHMDocument;
+  summary: DashboardSummary;
   latestBiomarkers: BiomarkerWithStatus[];
-  daysSinceLastReport?: number;
-  totalReports: number;
+  lhm: LHMDocument;
 }
 
 /**
@@ -66,9 +71,22 @@ export class DashboardService {
           // Fetch latest biomarkers with definitions
           const latestBiomarkers = await biomarkerService.getLatestBiomarkers(profileId);
 
-          // Calculate status for each biomarker
+          // Calculate status for each biomarker and structure for frontend
           const biomarkersWithStatus = latestBiomarkers.map((biomarker) => ({
-            ...biomarker,
+            biomarker: {
+              id: biomarker.id,
+              reportId: biomarker.reportId,
+              userId: biomarker.userId,
+              profileId: biomarker.profileId,
+              name: biomarker.name,
+              nameNormalized: biomarker.nameNormalized,
+              category: biomarker.category,
+              value: biomarker.value,
+              unit: biomarker.unit,
+              reportDate: biomarker.reportDate,
+              createdAt: biomarker.createdAt,
+            },
+            definition: biomarker.definition,
             status: biomarkerService.calculateStatus(biomarker.value, biomarker.definition),
           }));
 
@@ -84,6 +102,11 @@ export class DashboardService {
           // Get total report count
           const totalReports = await reportRepository.countByProfile(profileId);
 
+          // Get latest report date
+          const latestReportDate = biomarkersWithStatus.length > 0 && biomarkersWithStatus[0].reportDate
+            ? biomarkersWithStatus[0].reportDate.toISOString().split('T')[0]
+            : null;
+
           logger.info('Dashboard data fetched successfully', {
             profileId,
             biomarkerCount: biomarkersWithStatus.length,
@@ -93,10 +116,13 @@ export class DashboardService {
 
           return {
             profile,
-            lhm,
+            summary: {
+              totalReports,
+              latestReportDate,
+              biomarkerCount: biomarkersWithStatus.length,
+            },
             latestBiomarkers: biomarkersWithStatus,
-            daysSinceLastReport,
-            totalReports,
+            lhm,
           };
         },
         600 // 10 minutes cache

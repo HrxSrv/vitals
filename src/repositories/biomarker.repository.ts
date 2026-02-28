@@ -164,26 +164,10 @@ export class BiomarkerRepository {
   ): Promise<BiomarkerWithDefinition[]> {
     logger.debug('Finding biomarkers with definitions', { profileId });
 
-    const { data, error } = await supabase
-      .from('biomarkers')
-      .select(
-        `
-        *,
-        biomarker_definitions (
-          name_normalized,
-          display_name,
-          category,
-          unit,
-          ref_range_low,
-          ref_range_high,
-          critical_low,
-          critical_high,
-          description
-        )
-      `
-      )
-      .eq('profile_id', profileId)
-      .order('report_date', { ascending: false });
+    // Use raw SQL query since we removed the foreign key relationship
+    const { data, error } = await supabase.rpc('get_biomarkers_with_definitions', {
+      p_profile_id: profileId
+    });
 
     if (error) {
       logger.error('Failed to find biomarkers with definitions', {
@@ -193,11 +177,29 @@ export class BiomarkerRepository {
       throw new Error(`Failed to find biomarkers: ${error.message}`);
     }
 
-    return data.map((row: Record<string, any>) => ({
-      ...this.mapToDomain(row),
-      definition: row.biomarker_definitions
-        ? this.mapDefinitionToDomain(row.biomarker_definitions)
-        : undefined,
+    return data.map((row: any) => ({
+      id: row.id,
+      reportId: row.report_id,
+      userId: row.user_id,
+      profileId: row.profile_id,
+      name: row.name,
+      nameNormalized: row.name_normalized,
+      category: row.category,
+      value: row.value,
+      unit: row.unit,
+      reportDate: row.report_date ? new Date(row.report_date) : undefined,
+      createdAt: new Date(row.created_at),
+      definition: row.def_name_normalized ? {
+        nameNormalized: row.def_name_normalized,
+        displayName: row.def_display_name,
+        category: row.def_category,
+        unit: row.def_unit,
+        refRangeLow: row.def_ref_range_low,
+        refRangeHigh: row.def_ref_range_high,
+        criticalLow: row.def_critical_low,
+        criticalHigh: row.def_critical_high,
+        description: row.def_description,
+      } : undefined,
     }));
   }
 

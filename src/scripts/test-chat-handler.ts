@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 
 // Mock auth middleware for testing
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   req.user = { id: 'test-user-id', email: 'test@example.com' };
   next();
 });

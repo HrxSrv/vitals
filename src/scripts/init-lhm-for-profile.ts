@@ -23,7 +23,7 @@ async function initLHM() {
     if (existing) {
       console.log('✅ LHM already exists for this profile');
       console.log(`   Version: ${existing.version}`);
-      console.log(`   Last updated: ${existing.lastUpdated}`);
+      console.log(`   Last updated: ${existing.lastUpdatedAt}`);
       return;
     }
     
@@ -43,7 +43,7 @@ async function initLHM() {
     });
     
     console.log('✅ LHM initialized successfully');
-    console.log(`   ID: ${lhm.id}`);
+    console.log(`   Profile ID: ${lhm.profileId}`);
     console.log(`   Version: ${lhm.version}`);
   } catch (error) {
     console.error('❌ Failed to initialize LHM:', error);
