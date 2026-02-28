@@ -71,6 +71,10 @@ export interface BiomarkerDefinition {
   description?: string;
 }
 
+export interface BiomarkerWithDefinition extends Biomarker {
+  definition?: BiomarkerDefinition;
+}
+
 export type BiomarkerStatusType = 'normal' | 'borderline' | 'high' | 'low';
 export type TrendType = 'improving' | 'worsening' | 'stable' | 'new';
 

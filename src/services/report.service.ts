@@ -1,5 +1,7 @@
 import { reportRepository } from '../repositories/report.repository';
+import { embeddingRepository } from '../repositories/embedding.repository';
 import { storageService } from './storage.service';
+import { queueService } from './queue.service';
 import profileRepository from '../repositories/profile.repository';
 import { Report } from '../types/domain.types';
 import { HttpError, NotFoundError, AuthorizationError } from '../utils/httpError';
@@ -51,9 +53,14 @@ export class ReportService {
 
       logger.info(`Report uploaded successfully: ${report.id}`);
 
-      // TODO: Enqueue background job for OCR processing
-      // This will be implemented in task 9 (Implement report processing job)
-      // await queueService.enqueueProcessReport(report.id);
+      // Enqueue background job for OCR processing
+      await queueService.enqueueProcessReport({
+        reportId: report.id,
+        userId,
+        profileId,
+      });
+
+      logger.info(`Process report job enqueued for report: ${report.id}`);
 
       return report;
     } catch (error) {
@@ -142,10 +149,14 @@ export class ReportService {
         throw new AuthorizationError('Unauthorized to delete this report');
       }
 
+      // Delete embeddings associated with the report
+      await embeddingRepository.deleteByReport(reportId);
+      logger.info(`Embeddings deleted for report: ${reportId}`);
+
       // Delete file from storage
       await storageService.deleteFile(report.fileUrl);
 
-      // Delete report record (cascade deletes biomarkers and embeddings)
+      // Delete report record (cascade deletes biomarkers)
       await reportRepository.delete(reportId);
 
       logger.info(`Report deleted successfully: ${reportId}`);

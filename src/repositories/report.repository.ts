@@ -212,6 +212,57 @@ export class ReportRepository {
   }
 
   /**
+   * Count total reports for a profile
+   */
+  async countByProfile(profileId: string): Promise<number> {
+    try {
+      const { count, error } = await supabaseAdmin
+        .from('reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_id', profileId);
+
+      if (error) {
+        logger.error('Failed to count reports:', error);
+        throw new HttpError(500, `Failed to count reports: ${error.message}`, 'DB_ERROR');
+      }
+
+      return count || 0;
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error;
+      }
+      logger.error('Unexpected error counting reports:', error);
+      throw new HttpError(500, 'Failed to count reports', 'DB_ERROR');
+    }
+  }
+
+  /**
+   * Count total reports for a profile
+   */
+  async countByProfile(profileId: string): Promise<number> {
+    try {
+      const { count, error } = await supabaseAdmin
+        .from('reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_id', profileId);
+
+      if (error) {
+        logger.error('Failed to count reports:', error);
+        throw new HttpError(500, `Failed to count reports: ${error.message}`, 'DB_ERROR');
+      }
+
+      return count || 0;
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error;
+      }
+      logger.error('Unexpected error counting reports:', error);
+      throw new HttpError(500, 'Failed to count reports', 'DB_ERROR');
+    }
+  }
+
+
+  /**
    * Map database row to Report domain object
    */
   private mapToReport(row: any): Report {

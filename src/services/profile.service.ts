@@ -1,8 +1,9 @@
 import { ProfileRepository } from '../repositories/profile.repository';
+import { lhmRepository } from '../repositories/lhm.repository';
 import { Profile } from '../types/domain.types';
 import { HttpError } from '../utils/httpError';
-import { supabaseAdmin } from './supabase.service';
 import { LHM_SKELETON_TEMPLATE } from '../constants/lhm-templates';
+import { logger } from '../utils/logger';
 
 /**
  * Profile Service
@@ -132,7 +133,7 @@ export class ProfileService {
 
   /**
    * Initialize skeleton LHM for a new profile
-   * Creates the initial Living Health Markdown document
+   * Creates the initial Living Health Markdown document following lhm.md structure
    */
   private async initializeSkeletonLHM(profile: Profile): Promise<void> {
     try {
@@ -153,32 +154,28 @@ export class ProfileService {
       }
 
       // Generate skeleton LHM from template
-      const markdown = LHM_SKELETON_TEMPLATE.replace('{{name}}', profile.name)
-        .replace('{{age}}', age)
-        .replace('{{gender}}', profile.gender || 'N/A')
-        .replace('{{lastUpdated}}', new Date().toISOString().split('T')[0])
-        .replace('{{timestamp}}', new Date().toISOString());
+      const markdown = LHM_SKELETON_TEMPLATE
+        .replace(/{{name}}/g, profile.name)
+        .replace(/{{age}}/g, age)
+        .replace(/{{gender}}/g, profile.gender || 'N/A')
+        .replace(/{{lastUpdated}}/g, new Date().toISOString().split('T')[0]);
 
-      // Insert into user_health_markdown table
-      const { error } = await supabaseAdmin
-        .from('user_health_markdown')
-        .insert({
-          profile_id: profile.id,
-          user_id: profile.userId,
-          markdown,
-          version: 1,
-          last_updated_at: new Date().toISOString(),
-          tokens_approx: Math.round(markdown.length / 4), // Rough token estimate (rounded to integer)
-        });
+      // Calculate approximate token count (rough estimate: 1 token ≈ 4 characters)
+      const tokensApprox = Math.round(markdown.length / 4);
 
-      if (error) {
-        console.error('Failed to initialize LHM:', error);
-        // Don't throw - LHM initialization failure shouldn't block profile creation
-        // It can be retried later
-      }
+      // Create LHM document using repository
+      await lhmRepository.create({
+        profileId: profile.id,
+        userId: profile.userId,
+        markdown,
+        tokensApprox,
+      });
+
+      logger.info(`Skeleton LHM initialized for profile ${profile.id} (${profile.name})`);
     } catch (error) {
-      console.error('Error initializing skeleton LHM:', error);
-      // Don't throw - allow profile creation to succeed
+      logger.error(`Failed to initialize skeleton LHM for profile ${profile.id}:`, error);
+      // Don't throw - LHM initialization failure shouldn't block profile creation
+      // It can be retried later or created when the first report is uploaded
     }
   }
 }
