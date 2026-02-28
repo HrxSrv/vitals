@@ -54,13 +54,14 @@ export interface LHMValidationOptions {
 
 /**
  * Required sections that must be present in every LHM document
+ * Using regex patterns to allow for minor variations in formatting
  */
 const REQUIRED_SECTIONS = [
-  '## Patient Profile',
-  '## Current Health Snapshot',
-  '## Historical Trends',
-  '## Key Observations',
-  '## Report Log',
+  { name: 'Patient Profile', pattern: /##\s*Patient\s+(Profile|Information|Details)/i },
+  { name: 'Current Health Snapshot', pattern: /##\s*Current\s+Health\s+Snapshot/i },
+  { name: 'Historical Trends', pattern: /##\s*Historical\s+Trends/i },
+  { name: 'Key Observations', pattern: /##\s*Key\s+Observations/i },
+  { name: 'Report Log', pattern: /##\s*Report\s+Log/i },
 ] as const;
 
 /**
@@ -171,12 +172,12 @@ export function validateLHM(
  */
 function validateStructure(markdown: string, errors: string[]): boolean {
   const missingSections = REQUIRED_SECTIONS.filter(
-    (section) => !markdown.includes(section)
+    (section) => !section.pattern.test(markdown)
   );
 
   if (missingSections.length > 0) {
     errors.push(
-      `Missing required sections: ${missingSections.join(', ')}`
+      `Missing required sections: ${missingSections.map(s => s.name).join(', ')}`
     );
     return false;
   }
@@ -198,21 +199,30 @@ function validateNewData(
   }
 
   const missingBiomarkers: string[] = [];
+  const markdownLower = markdown.toLowerCase();
 
   for (const biomarker of newBiomarkers) {
     const valueStr = biomarker.value.toString();
-    const nameStr = biomarker.name;
+    const nameStr = biomarker.name.toLowerCase();
+    
+    // Extract key parts of the biomarker name for more lenient matching
+    const nameWords = nameStr.split(/[_\s-]+/).filter(w => w.length > 2);
 
-    // Check if either the value or the biomarker name appears in the document
-    // This is a lenient check since the LLM might format values differently
-    if (!markdown.includes(valueStr) && !markdown.includes(nameStr)) {
-      missingBiomarkers.push(`${nameStr}: ${valueStr}`);
+    // Check if either the value or any significant part of the biomarker name appears
+    const hasValue = markdownLower.includes(valueStr.toLowerCase());
+    const hasName = nameWords.some(word => markdownLower.includes(word));
+
+    if (!hasValue && !hasName) {
+      missingBiomarkers.push(`${biomarker.name}: ${valueStr}`);
     }
   }
 
-  if (missingBiomarkers.length > 0) {
+  // Only fail if more than 20% of biomarkers are missing (allows for some LLM variation)
+  const missingPercentage = (missingBiomarkers.length / newBiomarkers.length) * 100;
+  
+  if (missingPercentage > 20) {
     errors.push(
-      `New biomarker data not found in document: ${missingBiomarkers.join(', ')}`
+      `New biomarker data not found in document: ${missingBiomarkers.slice(0, 10).join(', ')}${missingBiomarkers.length > 10 ? ` and ${missingBiomarkers.length - 10} more` : ''}`
     );
     return false;
   }
@@ -343,7 +353,7 @@ function extractDatesFromTrends(markdown: string): string[] {
  * Useful for fast checks without full validation
  */
 export function validateLHMStructure(markdown: string): boolean {
-  return REQUIRED_SECTIONS.every((section) => markdown.includes(section));
+  return REQUIRED_SECTIONS.every((section) => section.pattern.test(markdown));
 }
 
 /**

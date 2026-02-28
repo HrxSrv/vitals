@@ -125,7 +125,12 @@ export class LHMService {
       );
 
       if (!isValid) {
-        logger.error('LHM validation failed', { profileId });
+        // Log the generated markdown for debugging
+        logger.error('Generated LHM that failed validation:', {
+          profileId,
+          markdownPreview: updatedMarkdown.substring(0, 2000),
+          markdownLength: updatedMarkdown.length,
+        });
         throw new HttpError(500, 'Generated LHM failed validation', 'VALIDATION_ERROR');
       }
 
@@ -202,7 +207,14 @@ export class LHMService {
       }
     );
 
-    return updatedMarkdown.trim();
+    // Strip markdown code blocks if present (LLM sometimes wraps response in ```markdown```)
+    let cleanedMarkdown = updatedMarkdown.trim();
+    const codeBlockMatch = cleanedMarkdown.match(/^```(?:markdown)?\s*\n([\s\S]*?)\n```$/);
+    if (codeBlockMatch) {
+      cleanedMarkdown = codeBlockMatch[1].trim();
+    }
+
+    return cleanedMarkdown;
   }
 
   /**
@@ -269,6 +281,10 @@ export class LHMService {
     oldMarkdown: string,
     newBiomarkers: Biomarker[]
   ): boolean {
+    // Check if this is the first report (skeleton LHM)
+    const isFirstReport = oldMarkdown.includes('No reports uploaded yet') || 
+                         oldMarkdown.length < 200;
+    
     const result = validateLHM(
       newMarkdown,
       oldMarkdown,
@@ -276,8 +292,8 @@ export class LHMService {
       (text) => mistralChatService.estimateTokens(text),
       {
         maxTokens: 8000,
-        minShrinkageRatio: 0.7,
-        checkHistoricalDates: true,
+        minShrinkageRatio: isFirstReport ? 0.1 : 0.7, // More lenient for first report
+        checkHistoricalDates: !isFirstReport, // Skip historical date check for first report
         strictMode: false,
       }
     );

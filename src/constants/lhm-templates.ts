@@ -62,14 +62,17 @@ Your task:
 6. Update the "Report Log" table with this first report
 7. Update metadata (Last Updated to today, Reports on File to 1, Last Checkup to report date, Next Checkup Recommended to 6 months from report date)
 
-IMPORTANT:
+CRITICAL RULES:
 - Maintain the EXACT markdown structure/format shown in the current LHM
 - Do NOT remove any sections, even if empty
+- Keep ALL section headers EXACTLY as shown: "## Patient Profile", "## Current Health Snapshot", "## Historical Trends", "## Key Observations & Concerns", "## Report Log"
 - Use the exact table column headers as shown: | Parameter | Value | Unit | Ref Range | Status | Trend |
 - Keep observations concise (2-3 sentences each)
 - Never diagnose. Use phrases like "suggests", "may indicate", "consider discussing with your doctor"
 - For Historical Trends tables, use format: | Date | Lab | Parameter1 | Parameter2 | ... |
 - Add an "Observation:" line after each Historical Trends table
+- Do NOT wrap your response in markdown code blocks
+- Return ONLY the markdown document, no explanations or preamble
 
 Return the COMPLETE updated markdown document.`;
 

@@ -16,8 +16,8 @@ export interface ChatCompletionOptions {
 
 export class MistralChatService {
   private client: Mistral;
-  private readonly DEFAULT_MODEL = 'mistral-large-latest';
-  private readonly MAX_CONTEXT_TOKENS = 32000; // Mistral Large context window
+  private readonly DEFAULT_MODEL = 'mistral-large-2512';
+  private readonly MAX_CONTEXT_TOKENS = 128000; // Mistral Large 2512 context window
 
   constructor() {
     const apiKey = process.env.MISTRAL_API_KEY;
