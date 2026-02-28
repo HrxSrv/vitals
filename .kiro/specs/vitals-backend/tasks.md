@@ -48,27 +48,27 @@
     - Handle Supabase Auth errors
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 4. Implement profile management
-  - [ ] 4.1 Create profile model and validation schemas
+- [x] 4. Implement profile management
+  - [x] 4.1 Create profile model and validation schemas
     - Define Profile TypeScript interface
     - Create Zod schemas for create and update operations
     - Define relationship and gender enums
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
   
-  - [ ] 4.2 Implement profile repository
+  - [x] 4.2 Implement profile repository
     - Create ProfileRepository with CRUD methods using Supabase client
     - Implement findByUserId, findById, create, update, delete methods
     - Handle cascade deletes for profile-related data
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
   
-  - [ ] 4.3 Implement profile service
+  - [x] 4.3 Implement profile service
     - Create ProfileService with business logic for profile operations
     - Implement authorization checks (users can only access their own profiles)
     - Auto-create default profile on user signup
     - Initialize skeleton LHM when profile is created
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
   
-  - [ ] 4.4 Create profile handler and routes
+  - [x] 4.4 Create profile handler and routes
     - Implement ProfileHandler with methods for list, create, get, update, delete
     - Set up Express routes with authentication and validation middleware
     - Add proper error handling

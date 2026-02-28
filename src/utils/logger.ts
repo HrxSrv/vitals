@@ -3,12 +3,20 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 class Logger {
   private log(level: LogLevel, message: string, meta?: unknown) {
     const timestamp = new Date().toISOString();
-    const logEntry = {
+    const logEntry: {
+      timestamp: string;
+      level: LogLevel;
+      message: string;
+      meta?: unknown;
+    } = {
       timestamp,
       level,
       message,
-      ...(meta && { meta }),
     };
+
+    if (meta !== undefined) {
+      logEntry.meta = meta;
+    }
 
     const output = JSON.stringify(logEntry);
 

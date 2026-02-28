@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import * as authController from '@controllers/auth';
 
-const router = Router();
+const router: RouterType = Router();
 
 /**
  * GET /api/auth/session

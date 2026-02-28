@@ -32,7 +32,7 @@ export async function checkDatabaseHealth(): Promise<{
     }
 
     // Test basic connectivity
-    const { data: biomarkers, error: biomarkerError } = await supabaseAdmin
+    const { error: biomarkerError } = await supabaseAdmin
       .from('biomarker_definitions')
       .select('name_normalized')
       .limit(1);

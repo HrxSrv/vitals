@@ -19,7 +19,7 @@ declare global {
 /**
  * Authentication middleware
  * Verifies Supabase JWT token and attaches user info to request
- * No separate users table - uses Supabase Auth directly
+ * Uses Supabase Auth as the single source of truth (no separate users table)
  */
 export async function authMiddleware(
   req: Request,
@@ -47,9 +47,9 @@ export async function authMiddleware(
       throw new AuthenticationError('Invalid or expired token');
     }
     
-    // Attach Supabase Auth user info to request
+    // Attach Supabase Auth user info directly to request
     req.user = {
-      id: user.id, // This is the Supabase Auth UUID
+      id: user.id, // Supabase Auth UUID
       email: user.email!,
       name: user.user_metadata?.name,
     };

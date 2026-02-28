@@ -16,13 +16,20 @@ export function errorMiddleware(
       details: error.details,
     });
 
-    return res.status(error.statusCode).json({
-      error: {
-        code: error.code,
-        message: error.message,
-        ...(error.details && { details: error.details }),
-      },
-    });
+    const errorResponse: {
+      code: string;
+      message: string;
+      details?: unknown;
+    } = {
+      code: error.code,
+      message: error.message,
+    };
+
+    if (error.details) {
+      errorResponse.details = error.details;
+    }
+
+    return res.status(error.statusCode).json({ error: errorResponse });
   }
 
   // Unhandled errors

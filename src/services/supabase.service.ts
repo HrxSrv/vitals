@@ -1,20 +1,36 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/database.types';
 
+// Lazy initialization to ensure environment variables are loaded
+let _supabaseAdmin: SupabaseClient<Database> | null = null;
+
 /**
  * Supabase client for backend operations using service role key
  * This client bypasses Row Level Security (RLS) policies
  */
-export const supabaseAdmin: SupabaseClient<Database> = createClient<Database>(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+export const supabaseAdmin: SupabaseClient<Database> = new Proxy({} as SupabaseClient<Database>, {
+  get(_target, prop) {
+    if (!_supabaseAdmin) {
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error(
+          'Missing Supabase environment variables. Please check your .env file contains SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
+        );
+      }
+      
+      _supabaseAdmin = createClient<Database>(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
+      );
+    }
+    return _supabaseAdmin[prop as keyof SupabaseClient<Database>];
+  },
+});
 
 /**
  * Create a Supabase client for user-specific operations with RLS
@@ -24,9 +40,15 @@ export const supabaseAdmin: SupabaseClient<Database> = createClient<Database>(
  * @returns Supabase client configured for the authenticated user
  */
 export function createUserSupabaseClient(accessToken: string): SupabaseClient<Database> {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    throw new Error(
+      'Missing Supabase environment variables. Please check your .env file contains SUPABASE_URL and SUPABASE_ANON_KEY'
+    );
+  }
+
   return createClient<Database>(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY,
     {
       global: {
         headers: {

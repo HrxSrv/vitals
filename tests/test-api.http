@@ -1,0 +1,44 @@
+### Health Check
+GET http://localhost:3000/health
+
+### Get Session (requires valid Supabase token)
+GET http://localhost:3000/api/auth/session
+Authorization: Bearer YOUR_SUPABASE_TOKEN_HERE
+
+### List Profiles (requires authentication)
+GET http://localhost:3000/api/profiles
+Authorization: Bearer YOUR_SUPABASE_TOKEN_HERE
+
+### Create Profile (requires authentication)
+POST http://localhost:3000/api/profiles
+Authorization: Bearer YOUR_SUPABASE_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "relationship": "self",
+  "dob": "1990-01-15T00:00:00.000Z",
+  "gender": "male"
+}
+
+### Get Specific Profile (requires authentication)
+GET http://localhost:3000/api/profiles/PROFILE_ID_HERE
+Authorization: Bearer YOUR_SUPABASE_TOKEN_HERE
+
+### Update Profile (requires authentication)
+PATCH http://localhost:3000/api/profiles/PROFILE_ID_HERE
+Authorization: Bearer YOUR_SUPABASE_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "name": "John Smith",
+  "dob": "1990-01-15T00:00:00.000Z"
+}
+
+### Set as Default Profile (requires authentication)
+PATCH http://localhost:3000/api/profiles/PROFILE_ID_HERE/default
+Authorization: Bearer YOUR_SUPABASE_TOKEN_HERE
+
+### Delete Profile (requires authentication)
+DELETE http://localhost:3000/api/profiles/PROFILE_ID_HERE
+Authorization: Bearer YOUR_SUPABASE_TOKEN_HERE

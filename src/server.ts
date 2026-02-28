@@ -1,14 +1,16 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
 import dotenv from 'dotenv';
-import { errorMiddleware } from '@middlewares/error.middleware';
-import authRoutes from '@routes/auth.routes';
 
-// Load environment variables
+// Load environment variables FIRST before any other imports
 dotenv.config();
 
-const app = express();
+import express, { Express } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import { errorMiddleware } from '@middlewares/error.middleware';
+import authRoutes from '@routes/auth.routes';
+import profileRoutes from '@routes/profile.routes';
+
+const app: Express = express();
 
 // Security middleware
 app.use(helmet());
@@ -25,9 +27,9 @@ app.get('/health', (_req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/profiles', profileRoutes);
 
 // Additional routes will be added here
-// app.use('/api/profiles', profileRoutes);
 // app.use('/api/reports', reportRoutes);
 // app.use('/api/dashboard', dashboardRoutes);
 // app.use('/api/biomarkers', biomarkerRoutes);
