@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, MessageCircle, User } from 'lucide-react';
+import { LayoutDashboard, FileText, TrendingUp, MessageCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 const NAV_ITEMS = [
   { href: '/',        label: 'Home',     icon: LayoutDashboard },
   { href: '/reports', label: 'Reports',  icon: FileText },
+  { href: '/trends',  label: 'Trends',   icon: TrendingUp },
   { href: '/chat',    label: 'Chat',     icon: MessageCircle },
   { href: '/profile', label: 'Profile',  icon: User },
 ];

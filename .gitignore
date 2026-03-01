@@ -6,6 +6,8 @@ yarn.lock
 # Build output
 dist/
 build/
+.next/
+out/
 
 # Environment variables
 .env

@@ -29,7 +29,20 @@ const app: Express = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+
+// CORS configuration
+const corsOptions = {
+  origin:
+    env.NODE_ENV === 'production'
+      ? [
+          process.env.FRONTEND_URL || 'https://your-app.vercel.app',
+          // Add your production frontend URL here
+        ]
+      : ['http://localhost:3001', 'http://localhost:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 
 // Request logging
 app.use(requestLoggerMiddleware);

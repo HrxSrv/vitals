@@ -22,7 +22,19 @@ export default function TrendsPage() {
   }, [profiles, activeProfileId, setActiveProfile]);
 
   const profileId = activeProfile?.id ?? null;
-  const { data: trends = [], isLoading } = useBiomarkerTrends(profileId);
+  const { data: trends = [], isLoading, error } = useBiomarkerTrends(profileId);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Trends Debug:', {
+      profileId,
+      activeProfile,
+      trendsCount: trends.length,
+      isLoading,
+      error,
+      trends: trends.slice(0, 2), // Log first 2 trends
+    });
+  }, [profileId, activeProfile, trends, isLoading, error]);
 
   // Group trends by category
   const groupedTrends = trends.reduce<Record<string, typeof trends>>((acc, trend) => {
