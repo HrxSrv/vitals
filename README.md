@@ -15,6 +15,8 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
+- [Demo & Video](#demo--video)
 - [Overview](#overview)
 - [Why Vitals?](#why-vitals)
 - [Top Features](#top-features)
@@ -28,6 +30,14 @@
 - [Resources](#resources)
 - [Contributing](#contributing)
 - [License](#license)
+
+---
+
+## Demo & Video
+
+**Live Demo**: [Try it on mobile!](https://vitals-bfi75zzce-adityaghai07s-projects.vercel.app/dashboard)
+
+**Demo Video**: [Watch on YouTube](https://youtu.be/mt6oHAHMWjc)
 
 ---
 
@@ -777,7 +787,8 @@ PATCH  /api/settings/notifications        # Update settings
 
 ### Demo & Video
 
-- **Live Demo**: [try this out](https://vitals-bfi75zzce-adityaghai07s-projects.vercel.app/dashboard)
+- **Live Demo**: [Try Vitals](https://vitals-bfi75zzce-adityaghai07s-projects.vercel.app/dashboard)
+- **Demo Video**: [Watch on YouTube](https://youtu.be/mt6oHAHMWjc)
 - **Demo Video**: [YouTube link - 5-minute walkthrough]
 
 ### Research & References
