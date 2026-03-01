@@ -5,7 +5,6 @@
 
 import '../env'; // Load environment variables first
 import { supabaseAdmin } from '../services/supabase.service';
-import { logger } from '../utils/logger';
 
 const newBiomarkers = [
   {

@@ -90,8 +90,8 @@ export class DashboardService {
           const totalReports = await reportRepository.countByProfile(profileId);
 
           // Get latest report date
-          const latestReportDate = biomarkersWithStatus.length > 0 && biomarkersWithStatus[0].biomarker.reportDate
-            ? biomarkersWithStatus[0].biomarker.reportDate.toISOString().split('T')[0]
+          const latestReportDate = biomarkersWithStatus.length > 0 && biomarkersWithStatus[0].reportDate
+            ? biomarkersWithStatus[0].reportDate.toISOString().split('T')[0]
             : null;
 
           logger.info('Dashboard data fetched successfully', {
