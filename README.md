@@ -71,9 +71,18 @@ Vitals transforms your medical reports into a **Living Health Markdown (LHM)** -
 
 Regular health tracking is crucial for early disease detection and prevention:
 
-- **Early Detection**: Studies show that tracking biomarkers like HbA1c, cholesterol, and blood pressure can detect conditions 2-5 years earlier ([PubMed](https://pubmed.ncbi.nlm.nih.gov/))
-- **Chronic Disease Management**: Regular monitoring improves outcomes for diabetes, hypertension, and cardiovascular diseases by 30-40% ([Times of India Health](https://timesofindia.indiatimes.com/life-style/health-fitness))
-- **Preventive Care**: Annual health checkups reduce mortality risk by identifying risk factors before they become serious ([WHO Guidelines](https://www.who.int/))
+- **Early Detection**: Biomarker tracking enables early detection and risk stratification of cardiovascular diseases, chronic kidney disease, and other conditions years before symptoms appear
+  - [Advancements in biomarkers for cardiovascular disease detection](https://pubmed.ncbi.nlm.nih.gov/40432692/)
+  - [Emerging biomarkers for early detection of chronic kidney disease](https://pubmed.ncbi.nlm.nih.gov/35455664/)
+  - [Biomarkers for early detection of Alzheimer's disease](https://pubmed.ncbi.nlm.nih.gov/27738903/)
+
+- **Chronic Disease Management**: Regular health checkups can reduce mortality risk by half through early detection and treatment of chronic diseases
+  - [Times of India: Regular health check-ups cut death risk by half](https://timesofindia.indiatimes.com/city/delhi/regular-health-check-up-cuts-death-risk-by-half/articleshow/121657241.cms)
+
+- **Preventive Care**: Routine preventive care and screenings help catch diseases early, reducing disease, disability, and death
+  - [CDC: Chronic Disease Prevention and Health Promotion](https://www.cdc.gov/chronic-disease/prevention/preventive-care.html)
+  - [Healthy People 2030: Preventive Care Objectives](https://odphp.health.gov/healthypeople/objectives-and-data/browse-objectives/preventive-care)
+  - [HealthCare.gov: Preventive Care Benefits](https://www.healthcare.gov/preventive-care-adults/)
 
 ---
 
@@ -322,7 +331,7 @@ graph LR
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/vitals.git
+git clone https://github.com/adityaghai07/vitals.git
 cd vitals
 ```
 
@@ -776,20 +785,26 @@ PATCH  /api/settings/notifications        # Update settings
 #### Why Health Tracking Matters
 
 1. **Early Disease Detection**
-   - [PubMed: Biomarker Tracking for Early Detection](https://pubmed.ncbi.nlm.nih.gov/)
-   - Studies show regular monitoring can detect diabetes, cardiovascular disease, and kidney issues 2-5 years earlier
+   - [PubMed: Biomarkers for cardiovascular disease detection](https://pubmed.ncbi.nlm.nih.gov/40432692/)
+   - [PubMed: Early detection of chronic kidney disease](https://pubmed.ncbi.nlm.nih.gov/35455664/)
+   - [PubMed: Biomarkers for Alzheimer's disease progression](https://pubmed.ncbi.nlm.nih.gov/27738903/)
+   - Biomarker tracking enables detection of conditions years before symptoms appear
 
 2. **Chronic Disease Management**
-   - [Times of India: Importance of Regular Health Checkups](https://timesofindia.indiatimes.com/life-style/health-fitness)
-   - Regular tracking improves outcomes for chronic conditions by 30-40%
+   - [Times of India: Regular health check-ups cut death risk by half](https://timesofindia.indiatimes.com/city/delhi/regular-health-check-up-cuts-death-risk-by-half/articleshow/121657241.cms)
+   - Early detection and treatment through regular monitoring significantly reduces mortality risk
 
 3. **Preventive Healthcare**
-   - [WHO Guidelines on Preventive Care](https://www.who.int/)
-   - Annual checkups reduce mortality risk by identifying risk factors early
+   - [CDC: Chronic Disease Prevention](https://www.cdc.gov/chronic-disease/prevention/preventive-care.html)
+   - [Healthy People 2030: Preventive Care](https://odphp.health.gov/healthypeople/objectives-and-data/browse-objectives/preventive-care)
+   - [HealthCare.gov: Preventive Services](https://www.healthcare.gov/preventive-care-adults/)
+   - Routine screenings and preventive care reduce disease, disability, and death
 
 4. **Patient Empowerment**
-   - [Harvard Health: Benefits of Health Tracking](https://www.health.harvard.edu/)
-   - Patients who track their health are more engaged and have better outcomes
+   - [Harvard Health: Activity trackers increase exercise](https://www.health.harvard.edu/exercise-and-fitness/do-activity-trackers-make-us-exercise-more)
+   - [Harvard Health: Wearable fitness trackers for heart health](https://www.health.harvard.edu/heart-health/smarter-safer-workouts-with-a-wearable-fitness-tracker)
+   - Fitness trackers linked to ~1,200 more steps/day and ~49 extra minutes of moderate activity/week
+   - Patients who actively track their health are more engaged and have better outcomes
 
 #### Technology References
 
