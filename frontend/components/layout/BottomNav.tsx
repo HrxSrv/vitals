@@ -6,11 +6,11 @@ import { LayoutDashboard, FileText, TrendingUp, MessageCircle, User } from 'luci
 import { cn } from '@/lib/utils/cn';
 
 const NAV_ITEMS = [
-  { href: '/',        label: 'Home',     icon: LayoutDashboard },
-  { href: '/reports', label: 'Reports',  icon: FileText },
-  { href: '/trends',  label: 'Trends',   icon: TrendingUp },
-  { href: '/chat',    label: 'Chat',     icon: MessageCircle },
-  { href: '/profile', label: 'Profile',  icon: User },
+  { href: '/dashboard', label: 'Home',     icon: LayoutDashboard },
+  { href: '/reports',   label: 'Reports',  icon: FileText },
+  { href: '/trends',    label: 'Trends',   icon: TrendingUp },
+  { href: '/chat',      label: 'Chat',     icon: MessageCircle },
+  { href: '/profile',   label: 'Profile',  icon: User },
 ];
 
 export function BottomNav() {
@@ -20,7 +20,7 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white/95 backdrop-blur-sm shadow-nav border-t border-border z-50 safe-bottom">
       <div className="flex items-center justify-around px-2 pt-2 pb-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+          const isActive = href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
           return (
             <Link
               key={href}
