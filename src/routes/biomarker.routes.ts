@@ -9,6 +9,13 @@ const router: RouterType = Router();
  */
 
 /**
+ * GET /api/biomarkers/trends
+ * Get biomarker trends for a profile (only biomarkers with 2+ data points)
+ * Query params: profileId (required)
+ */
+router.get('/trends', authMiddleware, biomarkerController.getBiomarkerTrends);
+
+/**
  * GET /api/biomarkers/trend
  * Get biomarker trend data for a specific biomarker and profile
  * Query params: profile_id (required), biomarker (required)
