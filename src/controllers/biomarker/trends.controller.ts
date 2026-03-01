@@ -6,13 +6,13 @@ import { biomarkerRepository } from '../../repositories/biomarker.repository';
  * GET /api/biomarkers/trends?profileId=xxx
  * Get biomarker trends for a profile (only biomarkers with 2+ data points)
  */
-export async function getBiomarkerTrends(req: Request, res: Response, next: NextFunction) {
+export async function getBiomarkerTrends(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.user!.id;
     const { profileId } = req.query;
 
     if (!profileId || typeof profileId !== 'string') {
-      return res.status(400).json({ error: 'profileId is required' });
+      res.status(400).json({ error: 'profileId is required' });
+      return;
     }
 
     // Get all biomarkers with definitions
@@ -30,9 +30,11 @@ export async function getBiomarkerTrends(req: Request, res: Response, next: Next
       .filter(([_, group]) => group.length >= 2)
       .map(([nameNormalized, group]) => {
         // Sort by date ascending
-        const sorted = group.sort((a, b) => 
-          new Date(a.reportDate).getTime() - new Date(b.reportDate).getTime()
-        );
+        const sorted = group.sort((a, b) => {
+          const dateA = a.reportDate ? new Date(a.reportDate).getTime() : 0;
+          const dateB = b.reportDate ? new Date(b.reportDate).getTime() : 0;
+          return dateA - dateB;
+        });
 
         const latest = sorted[sorted.length - 1];
         const definition = latest.definition;
@@ -45,7 +47,7 @@ export async function getBiomarkerTrends(req: Request, res: Response, next: Next
           refRangeLow: definition?.refRangeLow,
           refRangeHigh: definition?.refRangeHigh,
           history: sorted.map(b => ({
-            date: b.reportDate.toISOString(),
+            date: b.reportDate ? b.reportDate.toISOString() : new Date().toISOString(),
             value: b.value,
             status: biomarkerService.calculateStatus(b.value, b.definition || undefined),
           })),

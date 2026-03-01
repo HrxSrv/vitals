@@ -71,22 +71,9 @@ export class DashboardService {
           // Fetch latest biomarkers with definitions
           const latestBiomarkers = await biomarkerService.getLatestBiomarkers(profileId);
 
-          // Calculate status for each biomarker and structure for frontend
+          // Calculate status for each biomarker
           const biomarkersWithStatus = latestBiomarkers.map((biomarker) => ({
-            biomarker: {
-              id: biomarker.id,
-              reportId: biomarker.reportId,
-              userId: biomarker.userId,
-              profileId: biomarker.profileId,
-              name: biomarker.name,
-              nameNormalized: biomarker.nameNormalized,
-              category: biomarker.category,
-              value: biomarker.value,
-              unit: biomarker.unit,
-              reportDate: biomarker.reportDate,
-              createdAt: biomarker.createdAt,
-            },
-            definition: biomarker.definition,
+            ...biomarker,
             status: biomarkerService.calculateStatus(biomarker.value, biomarker.definition),
           }));
 
@@ -103,8 +90,8 @@ export class DashboardService {
           const totalReports = await reportRepository.countByProfile(profileId);
 
           // Get latest report date
-          const latestReportDate = biomarkersWithStatus.length > 0 && biomarkersWithStatus[0].reportDate
-            ? biomarkersWithStatus[0].reportDate.toISOString().split('T')[0]
+          const latestReportDate = biomarkersWithStatus.length > 0 && biomarkersWithStatus[0].biomarker.reportDate
+            ? biomarkersWithStatus[0].biomarker.reportDate.toISOString().split('T')[0]
             : null;
 
           logger.info('Dashboard data fetched successfully', {
