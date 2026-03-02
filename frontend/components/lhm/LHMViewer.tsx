@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { X, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -54,7 +53,7 @@ export function LHMViewer({ markdown, profileName, isOpen, onClose }: LHMViewerP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center sm:justify-center">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" 

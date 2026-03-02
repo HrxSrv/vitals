@@ -38,7 +38,7 @@ const corsOptions = {
           process.env.FRONTEND_URL || 'https://your-app.vercel.app',
           // Add your production frontend URL here
         ]
-      : ['http://localhost:3001', 'http://localhost:3000','https://vitals-bfi75zzce-adityaghai07s-projects.vercel.app'],
+      : ['http://localhost:3001', 'http://localhost:3000','https://vitals-bfi75zzce-adityaghai07s-projects.vercel.app','https://vitals-rho.vercel.app'],
   credentials: true,
   optionsSuccessStatus: 200,
 };
