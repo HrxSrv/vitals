@@ -74,6 +74,17 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
       count: biomarkers.length,
       finalDate: extractedDate,
     });
+
+    // Step 6.5: Update report date if not already set
+    // This handles: extracted date from OCR or fallback to upload date
+    if (extractedDate && !report.reportDate) {
+      await reportRepository.updateReportDate(reportId, extractedDate);
+      logger.info('Report date updated', {
+        reportId,
+        date: extractedDate.toISOString().split('T')[0],
+        source: 'extracted-or-upload-date',
+      });
+    }
     await job.updateProgress(80);
 
     // Step 7: Enqueue LHM update job
