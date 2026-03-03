@@ -27,6 +27,9 @@ router.post(
   reportController.uploadReport
 );
 
+// GET /api/reports/:id/download - Download report PDF (must come before /:id)
+router.get('/:id/download', reportController.downloadReport);
+
 // GET /api/reports/:id - Get a specific report
 router.get('/:id', reportController.getReport);
 
