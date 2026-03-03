@@ -176,8 +176,14 @@ ${ocrMarkdown}`;
     // Extract biomarkers from OCR
     const extraction = await this.extractFromOCR(ocrMarkdown);
 
-    // Use user-provided date if available, otherwise use extracted date
-    const reportDate = userProvidedDate || extraction.reportDate;
+    // Priority: user-provided date > extracted date > current date (upload date)
+    const reportDate = userProvidedDate || extraction.reportDate || new Date();
+
+    logger.info('Report date determined', {
+      reportId,
+      source: userProvidedDate ? 'user-provided' : extraction.reportDate ? 'extracted' : 'upload-date',
+      date: reportDate.toISOString().split('T')[0],
+    });
 
     // Normalize and store biomarkers
     const biomarkers = await this.normalizeAndStore(

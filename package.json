@@ -23,7 +23,8 @@
     "test:worker": "tsx src/scripts/test-worker.ts",
     "test:lhm-merge": "tsx src/scripts/test-lhm-merge.ts",
     "test:lhm-integration": "tsx src/scripts/test-lhm-merge-integration.ts",
-    "test:e2e": "tsx src/scripts/test-e2e.ts"
+    "test:e2e": "tsx src/scripts/test-e2e.ts",
+    "test:report-date": "tsx src/scripts/test-report-date-extraction.ts"
   },
   "keywords": [
     "health",
