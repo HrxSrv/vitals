@@ -187,35 +187,6 @@ export class ReportRepository {
   }
 
   /**
-   * Update report date (extracted from OCR or user-provided)
-   */
-  async updateReportDate(reportId: string, reportDate: Date): Promise<Report> {
-    try {
-      const { data: report, error } = await supabaseAdmin
-        .from('reports')
-        .update({ report_date: reportDate.toISOString().split('T')[0] })
-        .eq('id', reportId)
-        .select()
-        .single();
-
-      if (error) {
-        logger.error('Failed to update report date:', error);
-        throw new HttpError(500, `Failed to update report date: ${error.message}`, 'DB_ERROR');
-      }
-
-      logger.info(`Report ${reportId} date updated to: ${reportDate.toISOString().split('T')[0]}`);
-      return this.mapToReport(report);
-    } catch (error) {
-      if (error instanceof HttpError) {
-        throw error;
-      }
-      logger.error('Unexpected error updating report date:', error);
-      throw new HttpError(500, 'Failed to update report date', 'DB_ERROR');
-    }
-  }
-
-
-  /**
    * Delete a report
    * Note: Associated biomarkers and embeddings will be cascade deleted by database
    */
