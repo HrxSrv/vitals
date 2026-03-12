@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Clock, CheckCircle2, AlertTriangle, Loader2, Download } from 'lucide-react';
+import { ChevronRight, Clock, CheckCircle2, AlertTriangle, Loader2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { formatDate } from '@/lib/utils/formatters';
 import { apiClient } from '@/lib/api/client';
+import { PdfViewerModal } from './PdfViewerModal';
 import type { Report, ProcessingStatus } from '@/lib/types';
 
 const STATUS_CONFIG: Record<ProcessingStatus, { label: string; color: string; icon: React.ReactNode }> = {
@@ -21,31 +23,26 @@ interface ReportCardProps {
 export function ReportCard({ report }: ReportCardProps) {
   const cfg = STATUS_CONFIG[report.processingStatus];
   const bioCount = report.biomarkers?.length ?? 0;
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string>('');
 
-  const handleDownload = async (e: React.MouseEvent) => {
+  const handleView = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation();
     
     try {
-      // Make authenticated request - backend will redirect to signed URL
-      // We need to follow the redirect and download the file
+      // Get signed URL from backend
       const response = await apiClient.get(`/reports/${report.id}/download`, {
-        responseType: 'blob',
-        maxRedirects: 5, // Follow redirects
+        maxRedirects: 0, // Don't follow redirects
+        validateStatus: (status) => status === 302 || status === 200, // Accept redirects
       });
       
-      // Create blob URL and trigger download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `health-report-${formatDate(report.reportDate).replace(/\s/g, '-')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      // Extract the redirect URL from the response
+      const signedUrl = response.headers.location || response.data;
+      setPdfUrl(signedUrl);
+      setIsViewerOpen(true);
     } catch (error) {
-      console.error('Failed to download report:', error);
+      console.error('Failed to get PDF URL:', error);
     }
   };
 
@@ -77,17 +74,25 @@ export function ReportCard({ report }: ReportCardProps) {
           </div>
         </div>
 
-        {/* Download button */}
+        {/* View button */}
         <button
-          onClick={handleDownload}
+          onClick={handleView}
           className="p-2 rounded-xl hover:bg-primary-50 text-muted-foreground hover:text-primary-600 transition-colors flex-shrink-0"
-          title="Download PDF"
+          title="View PDF"
         >
-          <Download size={18} strokeWidth={2} />
+          <Eye size={18} strokeWidth={2} />
         </button>
 
         <ChevronRight size={16} className="text-muted-foreground flex-shrink-0" />
       </div>
+
+      {/* PDF Viewer Modal */}
+      <PdfViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        pdfUrl={pdfUrl}
+        fileName={`health-report-${formatDate(report.reportDate).replace(/\s/g, '-')}.pdf`}
+      />
     </Link>
   );
 }
