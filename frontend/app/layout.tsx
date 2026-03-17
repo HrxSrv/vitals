@@ -4,7 +4,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Vitals — Your Health Companion',
+  title: 'Vitals - Your Health Companion',
   description: 'Track your health biomarkers, upload reports, and get AI-powered insights.',
   manifest: '/manifest.json',
   icons: { icon: '/favicon.ico' },
@@ -28,9 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <QueryProvider>
           <AuthProvider>
-            <div className="app-shell">
-              {children}
-            </div>
+            {children}
           </AuthProvider>
         </QueryProvider>
       </body>

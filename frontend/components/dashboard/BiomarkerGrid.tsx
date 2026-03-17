@@ -11,7 +11,7 @@ export function BiomarkerGrid({ biomarkers }: BiomarkerGridProps) {
   const preview = biomarkers.slice(0, 6);
 
   return (
-    <div className="grid grid-cols-2 gap-3 px-4">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 px-4 lg:px-0">
       {preview.map((item, i) => {
         // Safety check for malformed data
         if (!item?.biomarker?.id) {

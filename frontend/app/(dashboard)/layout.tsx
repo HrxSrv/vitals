@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { SideNav } from '@/components/layout/SideNav';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -31,8 +32,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!isAuthenticated) return null;
 
   return (
-    <div className="pb-24">
-      {children}
+    <div className="flex min-h-screen bg-background">
+      {/* Desktop sidebar */}
+      <SideNav />
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0 pb-24 lg:pb-0">
+        {children}
+      </div>
+
+      {/* Mobile bottom nav */}
       <BottomNav />
     </div>
   );

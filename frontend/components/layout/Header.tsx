@@ -15,7 +15,7 @@ export function Header({ title, showBack, actions, className }: HeaderProps) {
   const router = useRouter();
 
   return (
-    <header className={cn('sticky-header px-4 py-3 flex items-center gap-3', className)}>
+    <header className={cn('sticky-header px-4 lg:px-8 py-3 flex items-center gap-3', className)}>
       {showBack && (
         <button
           onClick={() => router.back()}

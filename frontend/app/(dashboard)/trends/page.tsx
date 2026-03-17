@@ -61,10 +61,10 @@ export default function TrendsPage() {
         }
       />
 
-      <main className="flex-1 py-4 px-4 space-y-6">
+      <main className="flex-1 py-4 lg:py-8 px-4 lg:px-8 space-y-6">
         {isLoading && (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[...Array(4)].map((_, i) => (
               <div key={i} className="h-64 skeleton rounded-2xl" />
             ))}
           </div>
@@ -87,7 +87,7 @@ export default function TrendsPage() {
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
               {category}
             </h2>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {categoryTrends.map((trend) => (
                 <BiomarkerTrendChart key={trend.nameNormalized} trend={trend} />
               ))}
