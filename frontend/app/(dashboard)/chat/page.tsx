@@ -32,7 +32,7 @@ export default function ChatPage() {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen lg:h-[calc(100vh)] lg:max-h-screen">
       <Header
         title="Health Assistant"
         actions={
@@ -58,7 +58,7 @@ export default function ChatPage() {
       />
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 lg:px-8 py-4 space-y-3 pb-4">
         {messages.length === 0 ? (
           <EmptyChat />
         ) : (
@@ -75,7 +75,9 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <ChatInput onSend={sendMessage} disabled={isStreaming || !profileId} />
+      <div className="lg:px-4 lg:pb-4">
+        <ChatInput onSend={sendMessage} disabled={isStreaming || !profileId} />
+      </div>
     </div>
   );
 }

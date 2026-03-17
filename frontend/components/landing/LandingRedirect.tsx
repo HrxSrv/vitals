@@ -4,21 +4,15 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export function LandingRedirect() {
   const { isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace('/');
+      router.replace('/home');
     }
   }, [isAuthenticated, isLoading, router]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-[480px]">
-        {children}
-      </div>
-    </div>
-  );
+  return null;
 }

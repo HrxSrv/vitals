@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Plus, X, LogOut, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
 import { useProfileStore } from '@/lib/store/profileStore';
@@ -67,69 +68,80 @@ export default function ProfilePage() {
         }
       />
 
-      <main className="flex-1 py-4 px-4 space-y-6">
-        {/* User info */}
-        <div className="bg-white rounded-2xl shadow-card p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-lg">
-              {user?.name?.charAt(0).toUpperCase() ?? '?'}
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">{user?.name}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-between px-4 py-3 bg-accent-50 hover:bg-accent-100 text-accent-600 rounded-xl text-sm font-semibold transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <LogOut size={16} />
-              Sign out
-            </div>
-            <ChevronRight size={14} />
-          </button>
-        </div>
-
-        {/* Profiles */}
-        <section>
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-            Health Profiles
-          </h2>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(2)].map((_, i) => <div key={i} className="h-20 skeleton rounded-2xl" />)}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {profiles.map((profile) => (
-                <ProfileCard
-                  key={profile.id}
-                  profile={profile}
-                  onEdit={() => { setEditingProfile(profile); setModalMode('edit'); }}
-                  onDelete={() => setDeleteConfirm(profile)}
-                  onSetDefault={() => setDefault(profile.id)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Settings links */}
-        <section>
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">About</h2>
-          <div className="bg-white rounded-2xl shadow-card overflow-hidden">
-            {['Privacy Policy', 'Terms of Service', 'Help & Support'].map((item, i) => (
+      <main className="flex-1 py-4 lg:py-8 px-4 lg:px-8 space-y-6">
+        {/* Desktop: two-column layout */}
+        <div className="lg:grid lg:grid-cols-[1fr_1fr] lg:gap-8 lg:items-start space-y-6 lg:space-y-0">
+          {/* Left: user info + about */}
+          <div className="space-y-6">
+            {/* User info */}
+            <div className="bg-white rounded-2xl shadow-card p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-lg">
+                  {user?.name?.charAt(0).toUpperCase() ?? '?'}
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">{user?.name}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                </div>
+              </div>
               <button
-                key={item}
-                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted text-sm font-medium text-foreground transition-colors border-b border-border/50 last:border-0"
+                onClick={handleLogout}
+                className="w-full flex items-center justify-between px-4 py-3 bg-accent-50 hover:bg-accent-100 text-accent-600 rounded-xl text-sm font-semibold transition-colors"
               >
-                {item}
-                <ChevronRight size={14} className="text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <LogOut size={16} />
+                  Sign out
+                </div>
+                <ChevronRight size={14} />
               </button>
-            ))}
+            </div>
+
+            {/* Settings links */}
+            <section>
+              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">About</h2>
+              <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+                {[
+                  { label: 'Privacy Policy', href: '/privacy' },
+                  { label: 'Terms of Service', href: '/terms' },
+                  { label: 'Help & Support', href: '/help' },
+                ].map(({ label, href }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted text-sm font-medium text-foreground transition-colors border-b border-border/50 last:border-0"
+                  >
+                    {label}
+                    <ChevronRight size={14} className="text-muted-foreground" />
+                  </Link>
+                ))}
+              </div>
+            </section>
           </div>
-        </section>
+
+          {/* Right: profiles */}
+          <section>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
+              Health Profiles
+            </h2>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[...Array(2)].map((_, i) => <div key={i} className="h-20 skeleton rounded-2xl" />)}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {profiles.map((profile) => (
+                  <ProfileCard
+                    key={profile.id}
+                    profile={profile}
+                    onEdit={() => { setEditingProfile(profile); setModalMode('edit'); }}
+                    onDelete={() => setDeleteConfirm(profile)}
+                    onSetDefault={() => setDefault(profile.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </main>
 
       {/* Create/Edit Modal */}

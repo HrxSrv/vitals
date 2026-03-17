@@ -13,7 +13,7 @@ interface HealthSummaryCardProps {
 
 export function HealthSummaryCard({ profile, summary, alertCount }: HealthSummaryCardProps) {
   return (
-    <div className="mx-4 rounded-2xl bg-sage-gradient p-5 text-white overflow-hidden relative">
+    <div className="mx-4 lg:mx-0 rounded-2xl bg-sage-gradient p-5 text-white overflow-hidden relative">
       {/* Decorative circles */}
       <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
       <div className="absolute -bottom-6 -right-2 w-20 h-20 rounded-full bg-white/10" />
