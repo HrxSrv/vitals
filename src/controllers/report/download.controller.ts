@@ -21,8 +21,8 @@ export async function downloadReport(
     // Create a signed URL for temporary access (1 hour)
     const signedUrl = await storageService.createSignedUrl(report.fileUrl, 3600);
 
-    // Redirect to the signed URL
-    res.redirect(signedUrl);
+    // Return the signed URL as JSON — let the client handle the redirect
+    res.json({ url: signedUrl });
   } catch (error) {
     next(error);
   }

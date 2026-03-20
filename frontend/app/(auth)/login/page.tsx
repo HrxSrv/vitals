@@ -2,19 +2,23 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Leaf, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
 import { loginSchema, LoginFormData } from '@/lib/utils/validators';
 import { cn } from '@/lib/utils/cn';
+import { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
+
+  const authError = searchParams.get('error');
 
   const {
     register,
@@ -26,7 +30,7 @@ export default function LoginPage() {
     setServerError('');
     try {
       await login(data.email, data.password);
-      router.replace('/');
+      router.replace('/home');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Invalid email or password.';
       setServerError(msg);
@@ -50,6 +54,12 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 animate-fade-up animate-delay-100">
+          {authError === 'auth_failed' && (
+            <div className="bg-accent-50 border border-accent-200 text-accent-700 text-sm px-4 py-3 rounded-xl">
+              Email confirmation failed or link expired. Please try signing in or request a new link.
+            </div>
+          )}
+
           {serverError && (
             <div className="bg-accent-50 border border-accent-200 text-accent-700 text-sm px-4 py-3 rounded-xl">
               {serverError}
@@ -103,6 +113,14 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
 

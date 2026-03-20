@@ -38,7 +38,7 @@ export default function DashboardPage() {
     dashboard?.latestBiomarkers.filter((b) => b.status === 'high' || b.status === 'low').length ?? 0;
 
   const recentReports = reports.slice(0, 3);
-  const isEmpty = !dashLoading && (!dashboard || reports.length === 0);
+  const isEmpty = !dashLoading && (!dashboard || (dashboard.summary.totalReports === 0 && reports.length === 0));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -81,7 +81,7 @@ export default function DashboardPage() {
 
         {!profilesLoading && !dashLoading && isEmpty && <EmptyState profileId={profileId} />}
 
-        {!profilesLoading && !dashLoading && activeProfile && dashboard && (
+        {!profilesLoading && !dashLoading && !isEmpty && activeProfile && dashboard && (
           <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:px-8 lg:items-start space-y-5 lg:space-y-0">
             <div className="space-y-5 lg:space-y-6">
               <div className="lg:mx-0">
@@ -182,7 +182,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {dashboard?.lhm && activeProfile && (
+      {!isEmpty && dashboard?.lhm && activeProfile && (
         <LHMViewer
           markdown={dashboard.lhm.markdown}
           profileName={activeProfile.name}
@@ -195,6 +195,28 @@ export default function DashboardPage() {
 }
 
 function EmptyState({ profileId }: { profileId: string | null }) {
+  if (!profileId) {
+    return (
+      <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
+        <div className="w-24 h-24 rounded-full bg-primary-50 flex items-center justify-center mb-6">
+          <Leaf size={40} className="text-primary-400" />
+        </div>
+        <h2 className="font-display text-2xl font-semibold text-foreground mb-2">
+          Welcome to Vitals
+        </h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-xs">
+          Start by creating a health profile for yourself or a family member.
+        </p>
+        <Link
+          href="/profile"
+          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-colors shadow-lg shadow-primary-500/30"
+        >
+          Create your first profile
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
       <div className="w-24 h-24 rounded-full bg-primary-50 flex items-center justify-center mb-6">
@@ -206,7 +228,7 @@ function EmptyState({ profileId }: { profileId: string | null }) {
       <p className="text-sm text-muted-foreground leading-relaxed mb-8">
         Upload your first health report to track your biomarkers and get AI-powered insights.
       </p>
-      {profileId && <UploadButton profileId={profileId} variant="primary" label="Upload Report" />}
+      <UploadButton profileId={profileId} variant="primary" label="Upload Report" />
     </div>
   );
 }

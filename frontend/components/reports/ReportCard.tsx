@@ -27,19 +27,12 @@ export function ReportCard({ report }: ReportCardProps) {
   const [pdfUrl, setPdfUrl] = useState<string>('');
 
   const handleView = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
+    e.preventDefault();
     e.stopPropagation();
     
     try {
-      // Get signed URL from backend
-      const response = await apiClient.get(`/reports/${report.id}/download`, {
-        maxRedirects: 0, // Don't follow redirects
-        validateStatus: (status) => status === 302 || status === 200, // Accept redirects
-      });
-      
-      // Extract the redirect URL from the response
-      const signedUrl = response.headers.location || response.data;
-      setPdfUrl(signedUrl);
+      const { data } = await apiClient.get<{ url: string }>(`/reports/${report.id}/download`);
+      setPdfUrl(data.url);
       setIsViewerOpen(true);
     } catch (error) {
       console.error('Failed to get PDF URL:', error);

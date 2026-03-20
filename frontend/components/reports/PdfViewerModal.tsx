@@ -57,19 +57,37 @@ export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerM
           </div>
         </div>
 
-        {/* PDF Viewer using iframe */}
-        <div className="flex-1 relative bg-gray-100">
+        {/* PDF Viewer */}
+        <div className="flex-1 relative bg-gray-100 overflow-hidden">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" />
+              <p className="text-sm text-muted-foreground">Loading PDF…</p>
             </div>
           )}
-          <iframe
-            src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-            className="w-full h-full border-0"
-            title={fileName}
+          <object
+            data={pdfUrl}
+            type="application/pdf"
+            className="w-full h-full"
             onLoad={() => setIsLoading(false)}
-          />
+          >
+            {/* Fallback for browsers that can't render PDF inline */}
+            <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                Your browser can't display this PDF inline.
+              </p>
+              <a
+                href={pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                onClick={() => setIsLoading(false)}
+              >
+                <Download size={16} />
+                Open PDF
+              </a>
+            </div>
+          </object>
         </div>
       </div>
     </div>

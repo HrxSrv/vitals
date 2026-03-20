@@ -26,7 +26,8 @@ export default function SignupPage() {
     setServerError('');
     try {
       await signup(data.email, data.password, data.name);
-      router.replace('/');
+      // Redirect to check-email page — user must confirm email before accessing the app
+      router.replace(`/check-email?email=${encodeURIComponent(data.email)}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setServerError(msg);

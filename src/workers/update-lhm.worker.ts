@@ -4,6 +4,7 @@ import { reportRepository } from '../repositories/report.repository';
 import { biomarkerRepository } from '../repositories/biomarker.repository';
 import { lhmService } from '../services/lhm.service';
 import { queueService } from '../services/queue.service';
+import { dashboardService } from '../services/dashboard.service';
 import { logger } from '../utils/logger';
 
 /**
@@ -87,6 +88,10 @@ async function updateLHMJob(job: Job<UpdateLHMJobData>): Promise<void> {
 
     logger.info('LHM updated successfully', { profileId, reportId });
     await job.updateProgress(80);
+
+    // Invalidate dashboard cache so next request reflects new data
+    dashboardService.invalidateCache(profileId);
+    logger.debug('Dashboard cache invalidated after LHM update', { profileId });
 
     // Step 5: Check if LHM needs compression
     const needsCompression = await lhmService.needsCompression(profileId);

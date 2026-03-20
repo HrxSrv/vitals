@@ -3,10 +3,11 @@ import { biomarkerRepository } from '../repositories/biomarker.repository';
 import { mistralChatService } from './mistral-chat.service';
 import { logger } from '../utils/logger';
 import { HttpError } from '../utils/httpError';
-import { LHMDocument, Biomarker, BiomarkerWithDefinition } from '../types/domain.types';
+import { LHMDocument, Biomarker, BiomarkerWithDefinition, Profile } from '../types/domain.types';
 import {
   LHM_FIRST_REPORT_PROMPT,
   LHM_MERGE_PROMPT,
+  LHM_SKELETON_TEMPLATE,
 } from '../constants/lhm-templates';
 import { validateLHM, needsCompression as checkNeedsCompression } from '../utils/lhm-validator';
 
@@ -94,11 +95,21 @@ export class LHMService {
         reportDate: reportDate.toISOString(),
       });
 
-      // Get current LHM
-      const currentLHM = await lhmRepository.findByProfileId(profileId);
+      // Get current LHM — auto-initialize skeleton if missing
+      let currentLHM = await lhmRepository.findByProfileId(profileId);
       
       if (!currentLHM) {
-        throw new HttpError(404, 'LHM not found for profile', 'NOT_FOUND');
+        logger.warn('LHM missing for profile during update, initializing skeleton', { profileId });
+        // Fetch profile to build skeleton
+        const profileRepo = (await import('../repositories/profile.repository')).default;
+        const profile = await profileRepo.findById(profileId);
+        if (profile) {
+          await this.initializeSkeletonForProfile(profile);
+          currentLHM = await lhmRepository.findByProfileId(profileId);
+        }
+        if (!currentLHM) {
+          throw new HttpError(404, 'LHM not found and could not be initialized', 'NOT_FOUND');
+        }
       }
 
       // Get biomarker definitions for reference ranges
@@ -323,6 +334,44 @@ export class LHMService {
       throw new HttpError(404, 'LHM not found for profile', 'NOT_FOUND');
     }
 
+    return lhm;
+  }
+
+  /**
+   * Initialize a skeleton LHM for a profile that doesn't have one yet.
+   * Safe to call multiple times — no-ops if LHM already exists.
+   */
+  async initializeSkeletonForProfile(profile: Profile): Promise<LHMDocument> {
+    // Check if already exists
+    const existing = await lhmRepository.findByProfileId(profile.id);
+    if (existing) return existing;
+
+    let age = 'N/A';
+    if (profile.dob) {
+      const today = new Date();
+      const birth = new Date(profile.dob);
+      let a = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+      age = String(a);
+    }
+
+    const markdown = LHM_SKELETON_TEMPLATE
+      .replace(/{{name}}/g, profile.name)
+      .replace(/{{age}}/g, age)
+      .replace(/{{gender}}/g, profile.gender || 'N/A')
+      .replace(/{{lastUpdated}}/g, new Date().toISOString().split('T')[0]);
+
+    const tokensApprox = Math.round(markdown.length / 4);
+
+    const lhm = await lhmRepository.create({
+      profileId: profile.id,
+      userId: profile.userId,
+      markdown,
+      tokensApprox,
+    });
+
+    logger.info(`Skeleton LHM initialized for profile ${profile.id} (${profile.name})`);
     return lhm;
   }
 
