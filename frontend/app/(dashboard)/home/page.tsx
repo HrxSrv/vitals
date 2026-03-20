@@ -134,7 +134,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-left">
                         <p className="font-semibold text-sm">View Health Summary</p>
-                        <p className="text-xs text-white/80">Living Health Markdown</p>
+                        <p className="text-xs text-white/80">Your full health overview</p>
                       </div>
                     </div>
                     <ChevronRight size={20} className="text-white/80" />
@@ -155,7 +155,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-sm">Health Summary</p>
-                      <p className="text-xs text-white/80">Living Health Markdown</p>
+                      <p className="text-xs text-white/80">Your full health overview</p>
                     </div>
                   </div>
                   <ChevronRight size={20} className="text-white/80" />
