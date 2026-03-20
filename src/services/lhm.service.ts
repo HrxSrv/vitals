@@ -1,6 +1,6 @@
 import { lhmRepository } from '../repositories/lhm.repository';
 import { biomarkerRepository } from '../repositories/biomarker.repository';
-import { mistralChatService } from './mistral-chat.service';
+import { getChatProvider } from './ai-provider';
 import { logger } from '../utils/logger';
 import { HttpError } from '../utils/httpError';
 import { LHMDocument, Biomarker, BiomarkerWithDefinition, Profile } from '../types/domain.types';
@@ -146,7 +146,7 @@ export class LHMService {
       }
 
       // Estimate token count
-      const tokensApprox = mistralChatService.estimateTokens(updatedMarkdown);
+      const tokensApprox = getChatProvider().estimateTokens(updatedMarkdown);
 
       // Update LHM in database
       const updatedLHM = await lhmRepository.update(profileId, {
@@ -210,7 +210,7 @@ export class LHMService {
       content: prompt,
     };
 
-    const updatedMarkdown = await mistralChatService.complete(
+    const updatedMarkdown = await getChatProvider().complete(
       [systemMessage, userMessage],
       {
         temperature: 0.3, // Low temperature for consistent formatting
@@ -300,7 +300,7 @@ export class LHMService {
       newMarkdown,
       oldMarkdown,
       newBiomarkers,
-      (text) => mistralChatService.estimateTokens(text),
+      (text) => getChatProvider().estimateTokens(text),
       {
         maxTokens: 8000,
         minShrinkageRatio: isFirstReport ? 0.1 : 0.7, // More lenient for first report
@@ -403,7 +403,7 @@ export class LHMService {
     const lhm = await this.getLHM(profileId);
     return checkNeedsCompression(
       lhm.markdown,
-      (text) => mistralChatService.estimateTokens(text),
+      (text) => getChatProvider().estimateTokens(text),
       4000
     );
   }
@@ -451,7 +451,7 @@ Return ONLY the compressed markdown document, no explanations.`;
       content: compressionPrompt,
     };
 
-    const compressedMarkdown = await mistralChatService.complete(
+    const compressedMarkdown = await getChatProvider().complete(
       [systemMessage, userMessage],
       {
         temperature: 0.2,
@@ -464,7 +464,7 @@ Return ONLY the compressed markdown document, no explanations.`;
       compressedMarkdown.trim(),
       currentLHM.markdown,
       [], // No new biomarkers in compression
-      (text) => mistralChatService.estimateTokens(text),
+      (text) => getChatProvider().estimateTokens(text),
       {
         maxTokens: 5000,
         minShrinkageRatio: 0.5, // Allow more shrinkage during compression
@@ -483,7 +483,7 @@ Return ONLY the compressed markdown document, no explanations.`;
     }
 
     // Update LHM with compressed version
-    const tokensApprox = mistralChatService.estimateTokens(compressedMarkdown);
+    const tokensApprox = getChatProvider().estimateTokens(compressedMarkdown);
     
     const updatedLHM = await lhmRepository.update(profileId, {
       markdown: compressedMarkdown.trim(),

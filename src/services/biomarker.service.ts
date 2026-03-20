@@ -1,4 +1,4 @@
-import { mistralChatService } from './mistral-chat.service';
+import { getChatProvider } from './ai-provider';
 import { biomarkerRepository } from '../repositories/biomarker.repository';
 import { biomarkerNormalizer } from '../utils/biomarker-normalizer';
 import { logger } from '../utils/logger';
@@ -58,7 +58,7 @@ Lab Report Text:
 ${ocrMarkdown}`;
 
     try {
-      const result = await mistralChatService.extractStructured<{
+      const result = await getChatProvider().extractStructured<{
         reportDate?: string;
         biomarkers: ExtractedBiomarker[];
       }>(

@@ -1,4 +1,4 @@
-import { mistralChatService } from './mistral-chat.service';
+import { getChatProvider } from './ai-provider';
 import { lhmService } from './lhm.service';
 import profileRepository from '../repositories/profile.repository';
 import { emailService, MonthlyDigestData } from './email.service';
@@ -143,7 +143,7 @@ Generate a brief, friendly summary suitable for an email. Be empathetic and clea
       content: prompt,
     };
 
-    const summary = await mistralChatService.complete(
+    const summary = await getChatProvider().complete(
       [systemMessage, userMessage],
       {
         temperature: 0.7,
@@ -221,7 +221,7 @@ Be empathetic, supportive, and clear. This is the opening of an email digest.`;
       content: prompt,
     };
 
-    const summary = await mistralChatService.complete(
+    const summary = await getChatProvider().complete(
       [systemMessage, userMessage],
       {
         temperature: 0.7,

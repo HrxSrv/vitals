@@ -1,5 +1,5 @@
 import { BIOMARKER_ALIASES } from '../constants/biomarkers';
-import { mistralChatService } from '../services/mistral-chat.service';
+import { getChatProvider } from '../services/ai-provider';
 import { logger } from './logger';
 
 /**
@@ -70,7 +70,7 @@ Biomarker name to normalize: "${name}"
 
 Normalized name:`;
 
-      const response = await mistralChatService.complete(
+      const response = await getChatProvider().complete(
         [
           {
             role: 'user',
