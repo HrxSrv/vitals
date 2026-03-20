@@ -1,8 +1,6 @@
 import { ProfileRepository } from '../repositories/profile.repository';
-import { lhmRepository } from '../repositories/lhm.repository';
 import { Profile } from '../types/domain.types';
 import { HttpError } from '../utils/httpError';
-import { LHM_SKELETON_TEMPLATE } from '../constants/lhm-templates';
 import { logger } from '../utils/logger';
 
 /**
@@ -132,50 +130,16 @@ export class ProfileService {
   }
 
   /**
-   * Initialize skeleton LHM for a new profile
-   * Creates the initial Living Health Markdown document following lhm.md structure
+   * Initialize skeleton LHM for a new profile — delegates to lhmService
    */
   private async initializeSkeletonLHM(profile: Profile): Promise<void> {
     try {
-      // Calculate age from DOB if available
-      let age = 'N/A';
-      if (profile.dob) {
-        const today = new Date();
-        const birthDate = new Date(profile.dob);
-        let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate())
-        ) {
-          calculatedAge--;
-        }
-        age = calculatedAge.toString();
-      }
-
-      // Generate skeleton LHM from template
-      const markdown = LHM_SKELETON_TEMPLATE
-        .replace(/{{name}}/g, profile.name)
-        .replace(/{{age}}/g, age)
-        .replace(/{{gender}}/g, profile.gender || 'N/A')
-        .replace(/{{lastUpdated}}/g, new Date().toISOString().split('T')[0]);
-
-      // Calculate approximate token count (rough estimate: 1 token ≈ 4 characters)
-      const tokensApprox = Math.round(markdown.length / 4);
-
-      // Create LHM document using repository
-      await lhmRepository.create({
-        profileId: profile.id,
-        userId: profile.userId,
-        markdown,
-        tokensApprox,
-      });
-
-      logger.info(`Skeleton LHM initialized for profile ${profile.id} (${profile.name})`);
+      // Lazy import to avoid circular dependency
+      const { lhmService } = await import('./lhm.service');
+      await lhmService.initializeSkeletonForProfile(profile);
     } catch (error) {
       logger.error(`Failed to initialize skeleton LHM for profile ${profile.id}:`, error);
-      // Don't throw - LHM initialization failure shouldn't block profile creation
-      // It can be retried later or created when the first report is uploaded
+      // Non-fatal — dashboard will auto-recover on next request
     }
   }
 }

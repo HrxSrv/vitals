@@ -40,7 +40,7 @@ export interface DashboardData {
   profile: Profile;
   summary: DashboardSummary;
   latestBiomarkers: BiomarkerWithStatus[];
-  lhm: LHMDocument;
+  lhm: LHMDocument | null;
 }
 
 /**
@@ -79,8 +79,20 @@ export class DashboardService {
             throw new HttpError(403, 'Access denied to this profile', 'FORBIDDEN');
           }
 
-          // Fetch LHM document
-          const lhm = await lhmService.getLHM(profileId);
+          // Fetch LHM document — optional, dashboard works without it
+          let lhm = null;
+          try {
+            lhm = await lhmService.getLHM(profileId);
+          } catch (lhmError) {
+            // LHM missing for this profile — try to initialize a skeleton
+            try {
+              await lhmService.initializeSkeletonForProfile(profile);
+              lhm = await lhmService.getLHM(profileId);
+            } catch {
+              // Still failed — proceed without LHM, frontend handles null
+              logger.warn('LHM unavailable for profile, proceeding without it', { profileId });
+            }
+          }
 
           // Fetch latest biomarkers with definitions
           const latestBiomarkers = await biomarkerService.getLatestBiomarkers(profileId);
@@ -116,7 +128,7 @@ export class DashboardService {
 
           // Calculate days since last report
           let daysSinceLastReport: number | undefined;
-          if (lhm.lastReportDate) {
+          if (lhm?.lastReportDate) {
             const now = new Date();
             const lastReport = new Date(lhm.lastReportDate);
             const diffTime = Math.abs(now.getTime() - lastReport.getTime());

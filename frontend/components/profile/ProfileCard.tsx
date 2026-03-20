@@ -41,7 +41,7 @@ export function ProfileCard({ profile, onEdit, onDelete, onSetDefault }: Profile
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {formatRelationship(profile.relationship)} · {formatAge(profile.dob)}
+          {formatRelationship(profile.relationship)}{profile.dob ? ` · ${formatAge(profile.dob)}` : ''}
         </p>
       </div>
 

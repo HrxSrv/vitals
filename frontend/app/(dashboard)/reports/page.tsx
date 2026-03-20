@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { FileText } from 'lucide-react';
 import { useProfiles } from '@/lib/hooks/useProfiles';
@@ -66,11 +67,28 @@ export default function ReportsPage() {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
               <FileText size={32} className="text-muted-foreground" />
             </div>
-            <h3 className="font-display text-xl font-semibold text-foreground mb-2">No reports yet</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Upload a health report PDF to get started.
-            </p>
-            {profileId && <UploadButton profileId={profileId} variant="primary" label="Upload Report" />}
+            {!profileId ? (
+              <>
+                <h3 className="font-display text-xl font-semibold text-foreground mb-2">No profile yet</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Create a health profile first, then upload your reports.
+                </p>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-colors"
+                >
+                  Create a profile
+                </Link>
+              </>
+            ) : (
+              <>
+                <h3 className="font-display text-xl font-semibold text-foreground mb-2">No reports yet</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Upload a health report PDF to get started.
+                </p>
+                <UploadButton profileId={profileId} variant="primary" label="Upload Report" />
+              </>
+            )}
           </div>
         )}
 

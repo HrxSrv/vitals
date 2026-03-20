@@ -6,7 +6,7 @@ export const fetchProfiles = async (): Promise<Profile[]> => {
   return data.profiles;
 };
 
-export const createProfile = async (body: ProfileFormData): Promise<Profile> => {
+export const createProfile = async (body: Partial<ProfileFormData> & { name: string; relationship: string }): Promise<Profile> => {
   const { data } = await apiClient.post<{ profile: Profile }>('/profiles', body);
   return data.profile;
 };

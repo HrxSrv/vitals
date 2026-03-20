@@ -24,7 +24,7 @@ export const signupSchema = z
 export const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   relationship: z.enum(['self', 'mother', 'father', 'spouse', 'grandmother', 'grandfather', 'other']),
-  dob: z.string().min(1, 'Date of birth is required'),
+  dob: z.string().optional().default(''),
   gender: z.enum(['male', 'female', 'other']),
 });
 

@@ -2,7 +2,7 @@ import { Job } from 'bullmq';
 import { createWorker, GenerateEmbeddingsJobData } from '../lib/queue';
 import { reportRepository } from '../repositories/report.repository';
 import { embeddingRepository } from '../repositories/embedding.repository';
-import { mistralEmbedService } from '../services/mistral-embed.service';
+import { getEmbedProvider } from '../services/ai-provider';
 import { chunkText } from '../utils/text-chunker';
 import { logger } from '../utils/logger';
 
@@ -69,7 +69,7 @@ async function generateEmbeddingsJob(job: Job<GenerateEmbeddingsJobData>): Promi
 
     // Step 3: Generate embeddings using Mistral Embed API
     const chunkTexts = chunks.map(c => c.text);
-    const embeddingResults = await mistralEmbedService.embedBatch(chunkTexts);
+    const embeddingResults = await getEmbedProvider().embedBatch(chunkTexts);
 
     logger.info('Embeddings generated', {
       reportId,

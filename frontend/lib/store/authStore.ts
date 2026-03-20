@@ -45,28 +45,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signup: async (email, password, name) => {
     set({ isLoading: true });
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { 
+      options: {
         data: { name },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (error) {
-      set({ isLoading: false });
-      throw error;
-    }
-    const u = data.user;
-    if (u) {
-      set({
-        user: { id: u.id, email: u.email ?? '', name },
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } else {
-      set({ isLoading: false });
-    }
+    set({ isLoading: false });
+    if (error) throw error;
+    // Don't set user as authenticated — they must confirm email first
   },
 
   logout: async () => {

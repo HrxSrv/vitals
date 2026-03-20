@@ -1,5 +1,4 @@
-import { mistralChatService, ChatMessage } from './mistral-chat.service';
-import { mistralEmbedService } from './mistral-embed.service';
+import { getChatProvider, getEmbedProvider, ChatMessage } from './ai-provider';
 import { lhmService } from './lhm.service';
 import { embeddingRepository } from '../repositories/embedding.repository';
 import profileRepository from '../repositories/profile.repository';
@@ -87,7 +86,7 @@ export class ChatService {
         contextLength: context.lhm.length + context.relevantChunks.join('\n').length,
       });
 
-      for await (const chunk of mistralChatService.completeStream(messages, {
+      for await (const chunk of getChatProvider().completeStream(messages, {
         temperature: 0.7,
         maxTokens: 1500,
       })) {
@@ -199,7 +198,7 @@ export class ChatService {
     maxChunks: number
   ): Promise<string[]> {
     // Generate embedding for the query
-    const queryEmbedding = await mistralEmbedService.embed(query);
+    const queryEmbedding = await getEmbedProvider().embed(query);
 
     // Search for similar chunks
     const results = await embeddingRepository.similaritySearch(

@@ -1,12 +1,13 @@
 import { lhmRepository } from '../repositories/lhm.repository';
 import { biomarkerRepository } from '../repositories/biomarker.repository';
-import { mistralChatService } from './mistral-chat.service';
+import { getChatProvider } from './ai-provider';
 import { logger } from '../utils/logger';
 import { HttpError } from '../utils/httpError';
-import { LHMDocument, Biomarker, BiomarkerWithDefinition } from '../types/domain.types';
+import { LHMDocument, Biomarker, BiomarkerWithDefinition, Profile } from '../types/domain.types';
 import {
   LHM_FIRST_REPORT_PROMPT,
   LHM_MERGE_PROMPT,
+  LHM_SKELETON_TEMPLATE,
 } from '../constants/lhm-templates';
 import { validateLHM, needsCompression as checkNeedsCompression } from '../utils/lhm-validator';
 
@@ -94,11 +95,21 @@ export class LHMService {
         reportDate: reportDate.toISOString(),
       });
 
-      // Get current LHM
-      const currentLHM = await lhmRepository.findByProfileId(profileId);
+      // Get current LHM — auto-initialize skeleton if missing
+      let currentLHM = await lhmRepository.findByProfileId(profileId);
       
       if (!currentLHM) {
-        throw new HttpError(404, 'LHM not found for profile', 'NOT_FOUND');
+        logger.warn('LHM missing for profile during update, initializing skeleton', { profileId });
+        // Fetch profile to build skeleton
+        const profileRepo = (await import('../repositories/profile.repository')).default;
+        const profile = await profileRepo.findById(profileId);
+        if (profile) {
+          await this.initializeSkeletonForProfile(profile);
+          currentLHM = await lhmRepository.findByProfileId(profileId);
+        }
+        if (!currentLHM) {
+          throw new HttpError(404, 'LHM not found and could not be initialized', 'NOT_FOUND');
+        }
       }
 
       // Get biomarker definitions for reference ranges
@@ -135,7 +146,7 @@ export class LHMService {
       }
 
       // Estimate token count
-      const tokensApprox = mistralChatService.estimateTokens(updatedMarkdown);
+      const tokensApprox = getChatProvider().estimateTokens(updatedMarkdown);
 
       // Update LHM in database
       const updatedLHM = await lhmRepository.update(profileId, {
@@ -199,7 +210,7 @@ export class LHMService {
       content: prompt,
     };
 
-    const updatedMarkdown = await mistralChatService.complete(
+    const updatedMarkdown = await getChatProvider().complete(
       [systemMessage, userMessage],
       {
         temperature: 0.3, // Low temperature for consistent formatting
@@ -289,7 +300,7 @@ export class LHMService {
       newMarkdown,
       oldMarkdown,
       newBiomarkers,
-      (text) => mistralChatService.estimateTokens(text),
+      (text) => getChatProvider().estimateTokens(text),
       {
         maxTokens: 8000,
         minShrinkageRatio: isFirstReport ? 0.1 : 0.7, // More lenient for first report
@@ -327,6 +338,44 @@ export class LHMService {
   }
 
   /**
+   * Initialize a skeleton LHM for a profile that doesn't have one yet.
+   * Safe to call multiple times — no-ops if LHM already exists.
+   */
+  async initializeSkeletonForProfile(profile: Profile): Promise<LHMDocument> {
+    // Check if already exists
+    const existing = await lhmRepository.findByProfileId(profile.id);
+    if (existing) return existing;
+
+    let age = 'N/A';
+    if (profile.dob) {
+      const today = new Date();
+      const birth = new Date(profile.dob);
+      let a = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+      age = String(a);
+    }
+
+    const markdown = LHM_SKELETON_TEMPLATE
+      .replace(/{{name}}/g, profile.name)
+      .replace(/{{age}}/g, age)
+      .replace(/{{gender}}/g, profile.gender || 'N/A')
+      .replace(/{{lastUpdated}}/g, new Date().toISOString().split('T')[0]);
+
+    const tokensApprox = Math.round(markdown.length / 4);
+
+    const lhm = await lhmRepository.create({
+      profileId: profile.id,
+      userId: profile.userId,
+      markdown,
+      tokensApprox,
+    });
+
+    logger.info(`Skeleton LHM initialized for profile ${profile.id} (${profile.name})`);
+    return lhm;
+  }
+
+  /**
    * Get LHM version history
    */
   async getLHMHistory(profileId: string, limit?: number) {
@@ -354,7 +403,7 @@ export class LHMService {
     const lhm = await this.getLHM(profileId);
     return checkNeedsCompression(
       lhm.markdown,
-      (text) => mistralChatService.estimateTokens(text),
+      (text) => getChatProvider().estimateTokens(text),
       4000
     );
   }
@@ -402,7 +451,7 @@ Return ONLY the compressed markdown document, no explanations.`;
       content: compressionPrompt,
     };
 
-    const compressedMarkdown = await mistralChatService.complete(
+    const compressedMarkdown = await getChatProvider().complete(
       [systemMessage, userMessage],
       {
         temperature: 0.2,
@@ -415,7 +464,7 @@ Return ONLY the compressed markdown document, no explanations.`;
       compressedMarkdown.trim(),
       currentLHM.markdown,
       [], // No new biomarkers in compression
-      (text) => mistralChatService.estimateTokens(text),
+      (text) => getChatProvider().estimateTokens(text),
       {
         maxTokens: 5000,
         minShrinkageRatio: 0.5, // Allow more shrinkage during compression
@@ -434,7 +483,7 @@ Return ONLY the compressed markdown document, no explanations.`;
     }
 
     // Update LHM with compressed version
-    const tokensApprox = mistralChatService.estimateTokens(compressedMarkdown);
+    const tokensApprox = getChatProvider().estimateTokens(compressedMarkdown);
     
     const updatedLHM = await lhmRepository.update(profileId, {
       markdown: compressedMarkdown.trim(),

@@ -5,6 +5,7 @@ import { storageService } from '../services/storage.service';
 import { mistralOCRService } from '../services/mistral-ocr.service';
 import { biomarkerService } from '../services/biomarker.service';
 import { queueService } from '../services/queue.service';
+import { dashboardService } from '../services/dashboard.service';
 import { logger } from '../utils/logger';
 
 /**
@@ -99,6 +100,10 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
     // Step 8: Update report status to done
     await reportRepository.updateStatus(reportId, 'done');
     logger.info('Report processing completed successfully', { reportId });
+
+    // Invalidate dashboard cache so biomarker counts are fresh
+    dashboardService.invalidateCache(profileId);
+
     await job.updateProgress(100);
 
   } catch (error: any) {

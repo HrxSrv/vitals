@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { profileSchema, ProfileFormData } from '@/lib/utils/validators';
@@ -15,10 +15,21 @@ interface ProfileFormProps {
   isLoading?: boolean;
 }
 
+const NAME_PLACEHOLDER: Record<string, string> = {
+  self: 'e.g. Aditya',
+  mother: 'e.g. Mummy',
+  father: 'e.g. Papa',
+  spouse: 'e.g. Priya',
+  grandmother: 'e.g. Nani',
+  grandfather: 'e.g. Nana',
+  other: 'e.g. Uncle Raj',
+};
+
 export function ProfileForm({ profile, onSubmit, onCancel, isLoading }: ProfileFormProps) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -27,16 +38,11 @@ export function ProfileForm({ profile, onSubmit, onCancel, isLoading }: ProfileF
       : undefined,
   });
 
+  const relationship = useWatch({ control, name: 'relationship' });
+  const namePlaceholder = NAME_PLACEHOLDER[relationship] ?? 'e.g. Mummy';
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <Field label="Full name" error={errors.name?.message}>
-        <input
-          {...register('name')}
-          placeholder="e.g. John Doe"
-          className={inputClass(!!errors.name)}
-        />
-      </Field>
-
       <Field label="Relationship" error={errors.relationship?.message}>
         <select {...register('relationship')} className={inputClass(!!errors.relationship)}>
           <option value="">Select…</option>
@@ -46,7 +52,15 @@ export function ProfileForm({ profile, onSubmit, onCancel, isLoading }: ProfileF
         </select>
       </Field>
 
-      <Field label="Date of birth" error={errors.dob?.message}>
+      <Field label="Name" error={errors.name?.message}>
+        <input
+          {...register('name')}
+          placeholder={namePlaceholder}
+          className={inputClass(!!errors.name)}
+        />
+      </Field>
+
+      <Field label="Date of birth (optional)" error={errors.dob?.message}>
         <input
           type="date"
           {...register('dob')}
