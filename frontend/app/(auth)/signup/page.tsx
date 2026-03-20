@@ -58,7 +58,7 @@ export default function SignupPage() {
           )}
 
           <Field label="Full name" error={errors.name?.message}>
-            <input type="text" placeholder="John Doe" autoComplete="name" {...register('name')} className={inputClass(!!errors.name)} />
+            <input type="text" placeholder="Aditya Sharma" autoComplete="name" {...register('name')} className={inputClass(!!errors.name)} />
           </Field>
 
           <Field label="Email" error={errors.email?.message}>
