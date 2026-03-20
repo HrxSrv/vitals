@@ -36,13 +36,26 @@ export default function HelpPage() {
   const [open, setOpen] = useState<number | null>(null);
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = encodeURIComponent(`Vitals Support from ${form.name}`);
-    const body = encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`);
-    window.open(`mailto:adityaghailbdrp1@gmail.com?subject=${subject}&body=${body}`, '_blank');
-    setSent(true);
+    setSending(true);
+    setError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error('Failed to send');
+      setSent(true);
+    } catch {
+      setError('Something went wrong. Please try again or email us directly.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -121,15 +134,10 @@ export default function HelpPage() {
                 <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center">
                   <Send size={20} className="text-primary-600" />
                 </div>
-                <p className="font-semibold text-foreground">Your email client should have opened.</p>
-                <p className="text-sm text-muted-foreground">
-                  If not, email us directly at{' '}
-                  <a href="mailto:adityaghailbdrp1@gmail.com" className="text-primary-600 font-semibold">
-                    adityaghailbdrp1@gmail.com
-                  </a>
-                </p>
+                <p className="font-semibold text-foreground">Message sent!</p>
+                <p className="text-sm text-muted-foreground">We'll get back to you within 24 hours.</p>
                 <button
-                  onClick={() => setSent(false)}
+                  onClick={() => { setSent(false); setForm({ name: '', email: '', message: '' }); }}
                   className="text-xs text-muted-foreground hover:text-foreground underline mt-1"
                 >
                   Send another message
@@ -169,12 +177,14 @@ export default function HelpPage() {
                     className={cn(inputCls, 'resize-none')}
                   />
                 </FormField>
+                {error && <p className="text-sm text-red-500">{error}</p>}
                 <button
                   type="submit"
-                  className="w-full lg:w-auto px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                  disabled={sending}
+                  className="w-full lg:w-auto px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:opacity-60 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Send size={15} />
-                  Send Message
+                  {sending ? 'Sending…' : 'Send Message'}
                 </button>
               </form>
             )}
