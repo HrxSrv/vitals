@@ -1,4 +1,4 @@
-# Vitals Deployment Guide
+# Vithos Deployment Guide
 
 ## Overview
 - **Frontend**: Vercel (Next.js)

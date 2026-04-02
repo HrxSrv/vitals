@@ -25,6 +25,6 @@ export const useProfileStore = create<ProfileState>()(
 
       clearActiveProfile: () => set({ activeProfileId: null }),
     }),
-    { name: 'vitals-active-profile' }
+    { name: 'vithos-active-profile' }
   )
 );

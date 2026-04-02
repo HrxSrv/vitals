@@ -1,5 +1,5 @@
 {
-  "name": "vitals-backend",
+  "name": "vithos-backend",
   "version": "1.0.0",
   "description": "HealthTrack MVP - Personal health report tracking backend",
   "main": "dist/server.js",

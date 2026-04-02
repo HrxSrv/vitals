@@ -5,7 +5,7 @@
 1. Go to [vercel.com](https://vercel.com)
 2. Sign in with GitHub
 3. Click "Add New Project"
-4. Import your `vitals` repository
+4. Import your `vithos` repository
 5. Configure:
    - Framework Preset: Next.js (auto-detected)
    - Root Directory: `frontend`
@@ -37,13 +37,13 @@ vercel --prod
 
 # Follow prompts:
 # - Link to existing project? No
-# - Project name: vitals
+# - Project name: vithos
 # - Directory: ./
 # - Override settings? No
 ```
 
 ## After Vercel Deployment
 
-1. Copy your Vercel URL (e.g., `https://vitals.vercel.app`)
-2. Go back to Railway and add `FRONTEND_URL=https://vitals.vercel.app`
+1. Copy your Vercel URL (e.g., `https://vithos.vercel.app`)
+2. Go back to Railway and add `FRONTEND_URL=https://vithos.vercel.app`
 3. Redeploy Railway backend

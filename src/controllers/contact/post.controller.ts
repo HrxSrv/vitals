@@ -17,13 +17,13 @@ export async function postContactController(req: Request, res: Response, next: N
     const from = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 
     await resend.emails.send({
-      from: `Vitals Contact <${from}>`,
+      from: `Vithos Contact <${from}>`,
       to,
       reply_to: email,
-      subject: `[Vitals] Message from ${name}`,
+      subject: `[Vithos] Message from ${name}`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-          <h2 style="color:#1a1a1a">New message via Vitals Help</h2>
+          <h2 style="color:#1a1a1a">New message via Vithos Help</h2>
           <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
             <tr><td style="padding:8px 0;color:#666;width:80px">Name</td><td style="padding:8px 0;font-weight:600">${name}</td></tr>
             <tr><td style="padding:8px 0;color:#666">Email</td><td style="padding:8px 0"><a href="mailto:${email}">${email}</a></td></tr>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the implementation of the Living Health Markdown (LHM) merge logic for the vitals-backend system. The LHM merge logic is responsible for updating a profile's health summary document with new biomarker data from uploaded reports.
+This document describes the implementation of the Living Health Markdown (LHM) merge logic for the vithos-backend system. The LHM merge logic is responsible for updating a profile's health summary document with new biomarker data from uploaded reports.
 
 ## Architecture
 
@@ -277,9 +277,9 @@ npx tsx src/scripts/test-lhm-merge.ts
 ## References
 
 - [LHM Design Spec](../../docs/lhm.md)
-- [Requirements Document](../../.kiro/specs/vitals-backend/requirements.md)
-- [Design Document](../../.kiro/specs/vitals-backend/design.md)
-- [Task 10.3](../../.kiro/specs/vitals-backend/tasks.md)
+- [Requirements Document](../../.kiro/specs/vithos-backend/requirements.md)
+- [Design Document](../../.kiro/specs/vithos-backend/design.md)
+- [Task 10.3](../../.kiro/specs/vithos-backend/tasks.md)
 
 ## Changelog
 
