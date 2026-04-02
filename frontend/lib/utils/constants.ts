@@ -39,7 +39,6 @@ export const PROCESSING_STATUS_LABEL: Record<string, string> = {
 };
 
 export const RELATIONSHIP_OPTIONS = [
-  { value: 'self',        label: 'Self' },
   { value: 'mother',      label: 'Mother' },
   { value: 'father',      label: 'Father' },
   { value: 'spouse',      label: 'Spouse / Partner' },

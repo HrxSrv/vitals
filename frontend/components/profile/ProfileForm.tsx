@@ -16,7 +16,6 @@ interface ProfileFormProps {
 }
 
 const NAME_PLACEHOLDER: Record<string, string> = {
-  self: 'e.g. Aditya',
   mother: 'e.g. Mummy',
   father: 'e.g. Papa',
   spouse: 'e.g. Priya',
