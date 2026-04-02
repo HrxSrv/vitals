@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, Calendar, FileText, Activity } from 'lucide-react';
+import { AlertCircle, Calendar, FileText, Activity, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { formatDate, formatRelationship } from '@/lib/utils/formatters';
 import type { Profile, DashboardSummary } from '@/lib/types';
@@ -12,6 +12,8 @@ interface HealthSummaryCardProps {
 }
 
 export function HealthSummaryCard({ profile, summary, alertCount }: HealthSummaryCardProps) {
+  const isProcessing = summary.totalReports > 0 && summary.biomarkerCount === 0;
+
   return (
     <div className="mx-4 lg:mx-0 rounded-2xl bg-sage-gradient p-5 text-white overflow-hidden relative">
       {/* Decorative circles */}
@@ -48,24 +50,31 @@ export function HealthSummaryCard({ profile, summary, alertCount }: HealthSummar
             value={summary.latestReportDate ? formatDate(summary.latestReportDate) : 'None yet'}
           />
           <StatItem
-            icon={<Activity size={14} />}
+            icon={isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
             label="Markers"
-            value={String(summary.biomarkerCount)}
+            value={isProcessing ? 'Analyzing…' : String(summary.biomarkerCount)}
+            muted={isProcessing}
           />
         </div>
+
+        {isProcessing && (
+          <p className="text-white/60 text-[10px] mt-2.5 text-center">
+            Your report is being processed — results will appear shortly
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-function StatItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatItem({ icon, label, value, muted }: { icon: React.ReactNode; label: string; value: string; muted?: boolean }) {
   return (
     <div className="bg-white/15 rounded-xl px-3 py-2.5">
       <div className="flex items-center gap-1 text-white/70 mb-1">
         {icon}
         <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
       </div>
-      <p className="text-white font-bold text-sm leading-tight">{value}</p>
+      <p className={cn('font-bold text-sm leading-tight', muted ? 'text-white/60 italic' : 'text-white')}>{value}</p>
     </div>
   );
 }
