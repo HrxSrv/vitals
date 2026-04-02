@@ -12,9 +12,9 @@ export default function TermsPage() {
         <p className="text-xs text-muted-foreground mb-8">Last updated: March 2026</p>
 
         <div className="space-y-6">
-          <Section icon={<FileText size={18} />} title="What Vitals Is">
+          <Section icon={<FileText size={18} />} title="What Vithos Is">
             <p>
-              Vitals is a personal health tracking tool that helps you organise lab reports,
+              Vithos is a personal health tracking tool that helps you organise lab reports,
               visualise biomarker trends, and ask questions about your results using AI. It is
               not a medical device, does not provide medical diagnoses, and is not a substitute
               for professional medical advice.
@@ -23,7 +23,7 @@ export default function TermsPage() {
 
           <Section icon={<AlertTriangle size={18} />} title="Medical Disclaimer">
             <p>
-              All information provided by Vitals, including AI-generated responses, is for
+              All information provided by Vithos, including AI-generated responses, is for
               informational purposes only. Always consult a qualified healthcare professional
               before making any health decisions. Do not disregard professional medical advice
               based on anything you read in this app.
@@ -32,7 +32,7 @@ export default function TermsPage() {
 
           <Section icon={<CheckCircle2 size={18} />} title="Your Responsibilities">
             <ul className="space-y-2 list-disc list-inside text-sm text-muted-foreground">
-              <li>You must be 18 or older to use Vitals</li>
+              <li>You must be 18 or older to use Vithos</li>
               <li>You are responsible for the accuracy of data you upload</li>
               <li>You may only upload reports you have the right to share</li>
               <li>You agree not to use the service for any unlawful purpose</li>
@@ -49,7 +49,7 @@ export default function TermsPage() {
 
           <Section icon={<RefreshCw size={18} />} title="Changes to These Terms">
             <p>
-              We may update these terms from time to time. Continued use of Vitals after
+              We may update these terms from time to time. Continued use of Vithos after
               changes are posted constitutes acceptance of the new terms. We will notify you
               by email for any material changes.
             </p>

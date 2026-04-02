@@ -16,7 +16,7 @@ function CheckEmailContent() {
         <div className="w-10 h-10 rounded-2xl bg-primary-500 flex items-center justify-center">
           <Leaf size={20} className="text-white" />
         </div>
-        <span className="font-display text-2xl font-semibold text-foreground">Vitals</span>
+        <span className="font-display text-2xl font-semibold text-foreground">Vithos</span>
       </div>
 
       <div className="flex-1 flex flex-col justify-center items-center text-center animate-fade-up">

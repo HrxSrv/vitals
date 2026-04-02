@@ -4,7 +4,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Vitals - Your Health Companion',
+  title: 'Vithos - Your Health Companion',
   description: 'Track your health biomarkers, upload reports, and get AI-powered insights.',
   manifest: '/manifest.json',
   icons: { icon: '/favicon.ico' },
