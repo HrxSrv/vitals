@@ -52,3 +52,5 @@ export const GENDER_OPTIONS = [
   { value: 'female', label: 'Female' },
   { value: 'other',  label: 'Other' },
 ] as const;
+
+export const SLOTS_FLOOR_VALUE = 11;
