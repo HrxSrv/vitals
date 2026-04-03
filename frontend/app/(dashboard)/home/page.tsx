@@ -202,7 +202,7 @@ function EmptyState({ profileId }: { profileId: string | null }) {
           <Leaf size={40} className="text-primary-400" />
         </div>
         <h2 className="font-display text-2xl font-semibold text-foreground mb-2">
-          Welcome to Vitals
+          Welcome to Vithos
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-xs">
           Start by creating a health profile for yourself or a family member.

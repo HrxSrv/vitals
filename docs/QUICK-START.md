@@ -99,7 +99,7 @@ pnpm db:types   # Then generate types
 
 1. ✅ Complete setup (steps above)
 2. 📖 Read `docs/supabase-cloud-setup.md` for details
-3. 🚀 Start implementing features from `.kiro/specs/vitals-backend/tasks.md`
+3. 🚀 Start implementing features from `.kiro/specs/vithos-backend/tasks.md`
 
 ## Need Help?
 

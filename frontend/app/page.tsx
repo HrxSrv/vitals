@@ -15,7 +15,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center">
               <Leaf size={16} className="text-white" />
             </div>
-            <span className="font-display text-xl font-semibold text-foreground">Vitals</span>
+            <span className="font-display text-xl font-semibold text-foreground">Vithos</span>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -127,7 +127,7 @@ export default function LandingPage() {
             Your next checkup is only useful if you remember the last one.
           </h2>
           <p className="text-sm text-muted-foreground max-w-md leading-relaxed">
-            Vitals keeps every report, every value, every trend. So you walk into your doctor's office knowing exactly what changed and why.
+            Vithos keeps every report, every value, every trend. So you walk into your doctor's office knowing exactly what changed and why.
           </p>
           <Link
             href="/signup"
@@ -146,14 +146,14 @@ export default function LandingPage() {
             <div className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center">
               <Leaf size={12} className="text-white" />
             </div>
-            <span className="text-sm font-semibold text-foreground">Vitals</span>
+            <span className="text-sm font-semibold text-foreground">Vithos</span>
           </div>
           <div className="flex items-center gap-6 text-xs text-muted-foreground">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/help" className="hover:text-foreground transition-colors">Help</Link>
           </div>
-          <p className="text-xs text-muted-foreground">© 2026 Vitals. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© 2026 Vithos. All rights reserved.</p>
         </div>
       </footer>
 

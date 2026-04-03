@@ -21,7 +21,7 @@ export function HeroBanner() {
         <div className="relative rounded-3xl overflow-hidden shadow-2xl ring-1 ring-border group-hover:shadow-[0_32px_64px_rgba(30,45,61,0.18)] transition-shadow duration-500">
           <Image
             src="/banner.png"
-            alt="Vitals health dashboard"
+            alt="Vithos health dashboard"
             width={720}
             height={480}
             className="w-full h-auto object-cover"
@@ -33,6 +33,7 @@ export function HeroBanner() {
               <Activity size={14} className="text-primary-600" />
               <span className="text-xs font-semibold text-foreground">Your health dashboard</span>
             </div>
+
           </div>
         </div>
 

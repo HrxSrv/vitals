@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <div className="space-y-6">
           <Section icon={<Shield size={18} />} title="Our Commitment">
             <p>
-              Vitals is built on the principle that your health data belongs to you. We collect only
+              Vithos is built on the principle that your health data belongs to you. We collect only
               what is necessary to provide the service, never sell your data, and give you full
               control to delete it at any time.
             </p>

@@ -4,11 +4,11 @@ services:
   # PostgreSQL database for local development
   postgres:
     image: postgres:15-alpine
-    container_name: vitals-postgres
+    container_name: vithos-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: vitals_dev
+      POSTGRES_DB: vithos_dev
     ports:
       - '5432:5432'
     volumes:
@@ -22,7 +22,7 @@ services:
   # Redis for job queue
   redis:
     image: redis:7-alpine
-    container_name: vitals-redis
+    container_name: vithos-redis
     ports:
       - '6379:6379'
     volumes:

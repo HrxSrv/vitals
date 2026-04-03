@@ -23,7 +23,7 @@ export function SideNav() {
         <div className="w-8 h-8 rounded-xl bg-primary-100 flex items-center justify-center">
           <Leaf size={16} className="text-primary-600" />
         </div>
-        <span className="font-display text-lg font-semibold text-foreground">Vitals</span>
+        <span className="font-display text-lg font-semibold text-foreground">Vithos</span>
       </div>
 
       {/* Nav items */}

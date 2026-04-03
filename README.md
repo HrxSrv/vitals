@@ -1,4 +1,4 @@
-# Vitals - Together Towards Healthier Tomorrow
+# Vithos - Together Towards Healthier Tomorrow
 
 > Transform your medical reports into actionable health insights with AI. Track biomarkers, visualize trends, and get personalized health guidance for your entire family under one roof.
 
@@ -18,7 +18,7 @@
 - [Table of Contents](#table-of-contents)
 - [Demo & Video](#demo--video)
 - [Overview](#overview)
-- [Why Vitals?](#why-vitals)
+- [Why Vithos?](#why-vithos)
 - [Top Features](#top-features)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
@@ -35,7 +35,7 @@
 
 ## Demo & Video
 
-**Live Demo**: [Try it on mobile!](https://vitals-rho.vercel.app)
+**Live Demo**: [Try it on mobile!](https://vithos-rho.vercel.app)
 
 **Demo Video**: [Watch on YouTube](https://youtu.be/mt6oHAHMWjc)
 
@@ -43,7 +43,7 @@
 
 ## Overview
 
-Vitals is a comprehensive health management platform that helps individuals and families track, understand, and act on their medical data. Upload your lab reports, and let AI do the heavy lifting - extracting biomarkers, tracking trends, and providing personalized insights.
+Vithos is a comprehensive health management platform that helps individuals and families track, understand, and act on their medical data. Upload your lab reports, and let AI do the heavy lifting - extracting biomarkers, tracking trends, and providing personalized insights.
 
 ### Key Highlights
 
@@ -57,7 +57,7 @@ Vitals is a comprehensive health management platform that helps individuals and 
 
 ---
 
-## Why Vitals?
+## Why Vithos?
 
 ### The Problem
 
@@ -70,7 +70,7 @@ Medical reports are complex, scattered, and hard to interpret. Most people:
 
 ### The Solution
 
-Vitals transforms your medical reports into a **Living Health Markdown (LHM)** - a continuously updated, AI-maintained health profile that:
+Vithos transforms your medical reports into a **Living Health Markdown (LHM)** - a continuously updated, AI-maintained health profile that:
 - Consolidates all your health data in one place
 - Automatically tracks trends and flags anomalies
 - Provides plain-English explanations of your results
@@ -244,7 +244,7 @@ sequenceDiagram
 
 ### Living Health Markdown (LHM) Architecture
 
-The LHM is the core innovation of Vitals - a single, continuously updated markdown document per profile that serves as the source of truth for all health data.
+The LHM is the core innovation of Vithos - a single, continuously updated markdown document per profile that serves as the source of truth for all health data.
 
 ```mermaid
 graph LR
@@ -341,8 +341,8 @@ graph LR
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/adityaghai07/vitals.git
-cd vitals
+git clone https://github.com/adityaghai07/vithos.git
+cd vithos
 ```
 
 2. **Install dependencies**
@@ -483,7 +483,7 @@ Returns historical data for charting.
 
 ## Mistral AI Capabilities
 
-Vitals leverages three Mistral AI models for different tasks:
+Vithos leverages three Mistral AI models for different tasks:
 
 ### 1. Pixtral 12B (OCR)
 
@@ -783,11 +783,11 @@ PATCH  /api/settings/notifications        # Update settings
 
 ### Code & Writeup
 
-- **GitHub Repository**: [github.com/adityaghai07/vitals](https://github.com/adityaghai07/vitals)
+- **GitHub Repository**: [github.com/adityaghai07/vithos](https://github.com/adityaghai07/vithos)
 
 ### Demo & Video
 
-- **Live Demo**: [Try Vitals](https://vitals-rho.vercel.app)
+- **Live Demo**: [Try Vithos](https://vithos-rho.vercel.app)
 - **Demo Video**: [Watch on YouTube](https://youtu.be/mt6oHAHMWjc)
 - **Demo Video**: [YouTube link - 5-minute walkthrough]
 
@@ -921,8 +921,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/adityaghai07/vitals/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/adityaghai07/vitals/discussions)
+- **Issues**: [GitHub Issues](https://github.com/adityaghai07/vithos/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/adityaghai07/vithos/discussions)
 - **Email**: willaddsoon!
 
 ---
@@ -931,6 +931,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with care for better health outcomes**
 
- • [Demo](https://vitals-rho.vercel.app)
+ • [Demo](https://vithos-rho.vercel.app)
 
 </div>

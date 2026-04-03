@@ -354,7 +354,7 @@ After completing setup:
 
 1. ✅ Verify with `pnpm db:check`
 2. 🚀 Start dev server with `pnpm dev`
-3. 📝 Begin implementing features from `.kiro/specs/vitals-backend/tasks.md`
+3. 📝 Begin implementing features from `.kiro/specs/vithos-backend/tasks.md`
 4. 🧪 Test API endpoints using the dashboard or Postman
 
 ## Support

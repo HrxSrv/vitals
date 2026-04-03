@@ -35,5 +35,5 @@ FRONTEND_URL=https://your-app.vercel.app
 
 ## After Railway Deployment
 
-1. Copy your Railway URL (e.g., `https://vitals-production.up.railway.app`)
+1. Copy your Railway URL (e.g., `https://vithos-production.up.railway.app`)
 2. You'll need this for the frontend deployment

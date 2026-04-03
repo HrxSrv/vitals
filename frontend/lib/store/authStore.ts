@@ -12,6 +12,7 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 }
@@ -56,6 +57,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: false });
     if (error) throw error;
     // Don't set user as authenticated — they must confirm email first
+  },
+
+  signInWithGoogle: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) throw error;
   },
 
   logout: async () => {
