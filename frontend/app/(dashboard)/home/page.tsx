@@ -40,6 +40,9 @@ export default function DashboardPage() {
   const recentReports = reports.slice(0, 3);
   const isEmpty = !dashLoading && (!dashboard || (dashboard.summary.totalReports === 0 && reports.length === 0));
 
+  // Show processing state if reports exist but dashboard has no biomarkers yet
+  const isProcessing = reports.length > 0 && (!dashboard || dashboard.summary.biomarkerCount === 0);
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="sticky-header px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
@@ -79,15 +82,15 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {!profilesLoading && !dashLoading && isEmpty && <EmptyState profileId={profileId} />}
+        {!profilesLoading && !dashLoading && isEmpty && !isProcessing && <EmptyState profileId={profileId} />}
 
-        {!profilesLoading && !dashLoading && !isEmpty && activeProfile && dashboard && (
+        {!profilesLoading && !isEmpty && activeProfile && (dashboard || isProcessing) && (
           <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:px-8 lg:items-start space-y-5 lg:space-y-0">
             <div className="space-y-5 lg:space-y-6">
               <div className="lg:mx-0">
                 <HealthSummaryCard
                   profile={activeProfile}
-                  summary={dashboard.summary}
+                  summary={dashboard?.summary ?? { totalReports: reports.length, biomarkerCount: 0, latestReportDate: null }}
                   alertCount={alertCount}
                 />
               </div>

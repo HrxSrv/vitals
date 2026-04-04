@@ -2,7 +2,7 @@
 
 /**
  * Database health check script
- * 
+ *
  * Usage:
  *   pnpm tsx src/scripts/check-db.ts
  */

@@ -29,13 +29,8 @@ export class NotificationService {
     logger.info('Updating notification preferences', { userId, data });
 
     // Validate digest frequency
-    if (
-      data.digestFrequency &&
-      !['monthly', 'quarterly'].includes(data.digestFrequency)
-    ) {
-      throw new Error(
-        'Invalid digest frequency. Must be "monthly" or "quarterly".'
-      );
+    if (data.digestFrequency && !['monthly', 'quarterly'].includes(data.digestFrequency)) {
+      throw new Error('Invalid digest frequency. Must be "monthly" or "quarterly".');
     }
 
     return notificationRepository.update(userId, data);

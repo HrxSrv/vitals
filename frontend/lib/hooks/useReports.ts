@@ -21,7 +21,10 @@ export const useUploadReport = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: uploadReport,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['reports'] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      qc.invalidateQueries({ queryKey: ['dashboard', variables.profileId] });
+    },
   });
 };
 

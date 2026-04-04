@@ -107,24 +107,41 @@ export class ReportRepository {
    */
   async updateStatus(reportId: string, status: ReportStatus): Promise<Report> {
     try {
-      const { data: report, error } = await supabaseAdmin
-        .from('reports')
-        .update({ processing_status: status })
-        .eq('id', reportId)
-        .select()
-        .single();
+      // Retry a few times — the worker can race ahead of the DB commit on fast machines
+      let report = null;
+      let lastError = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data, error } = await supabaseAdmin
+          .from('reports')
+          .update({ processing_status: status })
+          .eq('id', reportId)
+          .select()
+          .maybeSingle();
 
-      if (error) {
-        logger.error('Failed to update report status:', error);
-        throw new HttpError(500, `Failed to update report status: ${error.message}`, 'DB_ERROR');
+        if (error) {
+          logger.error('Failed to update report status:', error);
+          throw new HttpError(500, `Failed to update report status: ${error.message}`, 'DB_ERROR');
+        }
+
+        if (data) {
+          report = data;
+          break;
+        }
+
+        // Row not visible yet — wait and retry
+        lastError = `Report ${reportId} not found on attempt ${attempt + 1}`;
+        logger.warn(lastError);
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      }
+
+      if (!report) {
+        throw new HttpError(404, `Report ${reportId} not found after retries`, 'NOT_FOUND');
       }
 
       logger.info(`Report ${reportId} status updated to: ${status}`);
       return this.mapToReport(report);
     } catch (error) {
-      if (error instanceof HttpError) {
-        throw error;
-      }
+      if (error instanceof HttpError) throw error;
       logger.error('Unexpected error updating report status:', error);
       throw new HttpError(500, 'Failed to update report status', 'DB_ERROR');
     }
@@ -144,7 +161,11 @@ export class ReportRepository {
 
       if (error) {
         logger.error('Failed to update report OCR markdown:', error);
-        throw new HttpError(500, `Failed to update report OCR markdown: ${error.message}`, 'DB_ERROR');
+        throw new HttpError(
+          500,
+          `Failed to update report OCR markdown: ${error.message}`,
+          'DB_ERROR'
+        );
       }
 
       logger.info(`Report ${reportId} OCR markdown updated`);
@@ -192,10 +213,7 @@ export class ReportRepository {
    */
   async delete(reportId: string): Promise<void> {
     try {
-      const { error } = await supabaseAdmin
-        .from('reports')
-        .delete()
-        .eq('id', reportId);
+      const { error } = await supabaseAdmin.from('reports').delete().eq('id', reportId);
 
       if (error) {
         logger.error('Failed to delete report:', error);
@@ -264,7 +282,6 @@ export class ReportRepository {
     }
   }
 
-
   /**
    * Map database row to Report domain object
    */
@@ -284,4 +301,3 @@ export class ReportRepository {
 
 // Export singleton instance
 export const reportRepository = new ReportRepository();
-

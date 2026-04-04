@@ -46,9 +46,7 @@ class Logger {
   }
 
   error(message: string, error?: Error | unknown) {
-    const meta = error instanceof Error
-      ? { message: error.message, stack: error.stack }
-      : error;
+    const meta = error instanceof Error ? { message: error.message, stack: error.stack } : error;
     this.log('error', message, meta);
   }
 

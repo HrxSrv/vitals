@@ -2,10 +2,7 @@ import { Router, IRouter } from 'express';
 import * as reportController from '../controllers/report';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
-import {
-  uploadReportSchema,
-  getReportsQuerySchema,
-} from '../validations/report.validations';
+import { uploadReportSchema, getReportsQuerySchema } from '../validations/report.validations';
 
 const router: IRouter = Router();
 
@@ -13,11 +10,7 @@ const router: IRouter = Router();
 router.use(authMiddleware);
 
 // GET /api/reports?profileId=xxx - Get all reports for a profile
-router.get(
-  '/',
-  validateRequest(getReportsQuerySchema, 'query'),
-  reportController.getReports
-);
+router.get('/', validateRequest(getReportsQuerySchema, 'query'), reportController.getReports);
 
 // POST /api/reports - Upload a new report
 router.post(
@@ -37,4 +30,3 @@ router.get('/:id', reportController.getReport);
 router.delete('/:id', reportController.deleteReport);
 
 export default router;
-

@@ -8,15 +8,15 @@ import { logger } from '../utils/logger';
 
 /**
  * Generate Embeddings Worker
- * 
+ *
  * Generates vector embeddings for report OCR content to enable RAG-powered Q&A
- * 
+ *
  * Pipeline:
  * 1. Fetch report OCR markdown
  * 2. Chunk text into segments (max 500 tokens)
  * 3. Generate embeddings using Mistral Embed API
  * 4. Store embeddings with profile and report associations
- * 
+ *
  * Requirements: 10.1, 10.2, 10.3, 10.4
  */
 
@@ -29,7 +29,7 @@ async function generateEmbeddingsJob(job: Job<GenerateEmbeddingsJobData>): Promi
     // Step 1: Fetch report from database
     await job.updateProgress(10);
     const report = await reportRepository.findById(reportId);
-    
+
     if (!report) {
       throw new Error(`Report ${reportId} not found`);
     }
@@ -61,14 +61,12 @@ async function generateEmbeddingsJob(job: Job<GenerateEmbeddingsJobData>): Promi
     logger.info('Text chunked for embeddings', {
       reportId,
       chunkCount: chunks.length,
-      avgTokens: Math.round(
-        chunks.reduce((sum, c) => sum + c.tokenCount, 0) / chunks.length
-      ),
+      avgTokens: Math.round(chunks.reduce((sum, c) => sum + c.tokenCount, 0) / chunks.length),
     });
     await job.updateProgress(40);
 
     // Step 3: Generate embeddings using Mistral Embed API
-    const chunkTexts = chunks.map(c => c.text);
+    const chunkTexts = chunks.map((c) => c.text);
     const embeddingResults = await getEmbedProvider().embedBatch(chunkTexts);
 
     logger.info('Embeddings generated', {
@@ -99,7 +97,6 @@ async function generateEmbeddingsJob(job: Job<GenerateEmbeddingsJobData>): Promi
       profileId,
       totalEmbeddings: embeddingsToCreate.length,
     });
-
   } catch (error: any) {
     logger.error('Embeddings generation failed', {
       reportId,
@@ -113,12 +110,8 @@ async function generateEmbeddingsJob(job: Job<GenerateEmbeddingsJobData>): Promi
 }
 
 // Create and start the worker
-export const generateEmbeddingsWorker = createWorker(
-  'generate-embeddings',
-  generateEmbeddingsJob,
-  {
-    concurrency: 2, // Process up to 2 embedding jobs concurrently (API rate limits)
-  }
-);
+export const generateEmbeddingsWorker = createWorker('generate-embeddings', generateEmbeddingsJob, {
+  concurrency: 2, // Process up to 2 embedding jobs concurrently (API rate limits)
+});
 
 logger.info('Generate embeddings worker started');

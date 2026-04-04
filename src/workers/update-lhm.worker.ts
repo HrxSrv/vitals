@@ -9,10 +9,10 @@ import { logger } from '../utils/logger';
 
 /**
  * Update LHM Worker
- * 
+ *
  * Updates the Living Health Markdown document for a profile with new biomarker data
  * This worker is triggered after report processing completes
- * 
+ *
  * Pipeline:
  * 1. Fetch biomarkers for the report
  * 2. Get report metadata (date, lab name)
@@ -30,7 +30,7 @@ async function updateLHMJob(job: Job<UpdateLHMJobData>): Promise<void> {
     // Step 1: Fetch the report to get metadata
     await job.updateProgress(10);
     const report = await reportRepository.findById(reportId);
-    
+
     if (!report) {
       throw new Error(`Report ${reportId} not found`);
     }
@@ -47,7 +47,7 @@ async function updateLHMJob(job: Job<UpdateLHMJobData>): Promise<void> {
 
     // Step 2: Fetch biomarkers for this report
     const biomarkers = await biomarkerRepository.findByReport(reportId);
-    
+
     if (biomarkers.length === 0) {
       logger.warn('No biomarkers found for report, skipping LHM update', {
         reportId,
@@ -78,13 +78,8 @@ async function updateLHMJob(job: Job<UpdateLHMJobData>): Promise<void> {
 
     // Step 4: Update LHM with new biomarker data
     const reportDate = report.reportDate || new Date();
-    
-    await lhmService.updateLHM(
-      profileId,
-      biomarkers,
-      reportDate,
-      labName
-    );
+
+    await lhmService.updateLHM(profileId, biomarkers, reportDate, labName);
 
     logger.info('LHM updated successfully', { profileId, reportId });
     await job.updateProgress(80);
@@ -95,12 +90,12 @@ async function updateLHMJob(job: Job<UpdateLHMJobData>): Promise<void> {
 
     // Step 5: Check if LHM needs compression
     const needsCompression = await lhmService.needsCompression(profileId);
-    
+
     if (needsCompression) {
       logger.info('LHM exceeds token limit, triggering compression', {
         profileId,
       });
-      
+
       try {
         await lhmService.compressLHM(profileId);
         logger.info('LHM compression completed', { profileId });
@@ -129,7 +124,6 @@ async function updateLHMJob(job: Job<UpdateLHMJobData>): Promise<void> {
       profileId,
       reportId,
     });
-
   } catch (error: any) {
     logger.error('LHM update failed', {
       profileId,
@@ -144,12 +138,8 @@ async function updateLHMJob(job: Job<UpdateLHMJobData>): Promise<void> {
 }
 
 // Create and start the worker
-export const updateLHMWorker = createWorker(
-  'update-lhm',
-  updateLHMJob,
-  {
-    concurrency: 2, // Process up to 2 LHM updates concurrently (LLM calls are expensive)
-  }
-);
+export const updateLHMWorker = createWorker('update-lhm', updateLHMJob, {
+  concurrency: 2, // Process up to 2 LHM updates concurrently (LLM calls are expensive)
+});
 
 logger.info('Update LHM worker started');

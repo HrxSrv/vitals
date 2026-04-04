@@ -9,7 +9,7 @@ export function validateRequest(schema: ZodSchema, type: ValidationType = 'body'
     try {
       const target = type === 'body' ? req.body : type === 'query' ? req.query : req.params;
       const validated = schema.parse(target);
-      
+
       if (type === 'body') {
         req.body = validated;
       } else if (type === 'query') {
@@ -17,7 +17,7 @@ export function validateRequest(schema: ZodSchema, type: ValidationType = 'body'
       } else {
         req.params = validated;
       }
-      
+
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -25,11 +25,12 @@ export function validateRequest(schema: ZodSchema, type: ValidationType = 'body'
           path: err.path.join('.'),
           message: err.message,
         }));
-        const message = type === 'body' 
-          ? 'Invalid request body' 
-          : type === 'query' 
-          ? 'Invalid query parameters' 
-          : 'Invalid path parameters';
+        const message =
+          type === 'body'
+            ? 'Invalid request body'
+            : type === 'query'
+              ? 'Invalid query parameters'
+              : 'Invalid path parameters';
         next(new ValidationError(message, details));
       } else {
         next(error);

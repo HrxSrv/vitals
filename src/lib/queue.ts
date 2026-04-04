@@ -75,7 +75,7 @@ export function getQueue(queueName: QueueName): Queue {
   if (!queues.has(queueName)) {
     const queue = new Queue(queueName, getDefaultQueueOptions());
     queues.set(queueName, queue);
-    
+
     // Set up queue event listeners
     queue.on('error', (error) => {
       console.error(`Queue ${queueName} error:`, error);
@@ -137,7 +137,7 @@ export async function getQueueHealth(queueName: QueueName): Promise<{
   delayed: number;
 }> {
   const queue = getQueue(queueName);
-  
+
   const [waiting, active, completed, failed, delayed] = await Promise.all([
     queue.getWaitingCount(),
     queue.getActiveCount(),

@@ -97,9 +97,7 @@ export class CronManager {
       for (const user of eligibleUsers) {
         try {
           // Fetch user email from Supabase Auth
-          const { data: authUser, error } = await supabaseAdmin.auth.admin.getUserById(
-            user.userId
-          );
+          const { data: authUser, error } = await supabaseAdmin.auth.admin.getUserById(user.userId);
 
           if (error || !authUser?.user?.email) {
             logger.warn('Skipping user without email', {

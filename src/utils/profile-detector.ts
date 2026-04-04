@@ -18,13 +18,13 @@ const PROFILE_KEYWORDS: ProfileKeywords[] = [
 
 /**
  * Detects which profile a question is referring to based on keyword matching
- * 
+ *
  * Detection strategy (in order of priority):
  * 1. Full name match (e.g., "Mary Doe")
  * 2. Unique name part match (e.g., "Mary" if no other profile has "Mary")
  * 3. Relationship keyword match (e.g., "mom", "dad", "my")
  * 4. Default profile fallback
- * 
+ *
  * @param question The user's question
  * @param profiles List of user's profiles
  * @param defaultProfile Optional default profile to use if no match found
@@ -36,7 +36,7 @@ export function detectProfileFromQuestion(
   defaultProfile?: Profile
 ): Profile | null {
   const lowerQuestion = question.toLowerCase();
-  
+
   // First pass: Try to match full profile names (most specific)
   for (const profile of profiles) {
     const nameRegex = new RegExp(`\\b${escapeRegex(profile.name)}\\b`, 'i');
@@ -44,18 +44,19 @@ export function detectProfileFromQuestion(
       return profile;
     }
   }
-  
+
   // Second pass: Try to match individual name parts (first name, last name)
   // Only match if the name part is unique across profiles
   for (const profile of profiles) {
     const nameParts = profile.name.split(/\s+/);
     for (const part of nameParts) {
-      if (part.length > 2) { // Avoid matching very short names
+      if (part.length > 2) {
+        // Avoid matching very short names
         // Check if this name part is unique to this profile
         const isUnique = !profiles.some(
-          p => p.id !== profile.id && p.name.toLowerCase().includes(part.toLowerCase())
+          (p) => p.id !== profile.id && p.name.toLowerCase().includes(part.toLowerCase())
         );
-        
+
         if (isUnique) {
           const partRegex = new RegExp(`\\b${escapeRegex(part)}\\b`, 'i');
           if (partRegex.test(question)) {
@@ -65,7 +66,7 @@ export function detectProfileFromQuestion(
       }
     }
   }
-  
+
   // Third pass: Try to match keywords to relationships
   for (const { relationship, keywords } of PROFILE_KEYWORDS) {
     for (const keyword of keywords) {
@@ -73,14 +74,14 @@ export function detectProfileFromQuestion(
       const regex = new RegExp(`\\b${escapeRegex(keyword)}\\b`, 'i');
       if (regex.test(lowerQuestion)) {
         // Find profile with matching relationship
-        const matchedProfile = profiles.find(p => p.relationship === relationship);
+        const matchedProfile = profiles.find((p) => p.relationship === relationship);
         if (matchedProfile) {
           return matchedProfile;
         }
       }
     }
   }
-  
+
   // Return default profile if no match found
   return defaultProfile || null;
 }

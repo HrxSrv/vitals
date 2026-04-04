@@ -2,10 +2,7 @@ import { Router, type Router as RouterType } from 'express';
 import * as profileController from '@controllers/profile';
 import { authMiddleware } from '@middlewares/auth.middleware';
 import { validateRequest } from '@middlewares/validation.middleware';
-import {
-  createProfileSchema,
-  updateProfileSchema,
-} from '@validations/profile.validations';
+import { createProfileSchema, updateProfileSchema } from '@validations/profile.validations';
 
 const router: RouterType = Router();
 
@@ -51,11 +48,7 @@ router.patch(
  * PATCH /api/profiles/:id/default
  * Set a profile as the default profile
  */
-router.patch(
-  '/:id/default',
-  authMiddleware,
-  profileController.setDefaultProfile
-);
+router.patch('/:id/default', authMiddleware, profileController.setDefaultProfile);
 
 /**
  * DELETE /api/profiles/:id

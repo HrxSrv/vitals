@@ -48,7 +48,7 @@ export class StorageService {
 
   /**
    * Upload a file to Supabase Storage
-   * 
+   *
    * @param userId - User ID for organizing files
    * @param profileId - Profile ID for organizing files
    * @param file - File buffer to upload
@@ -82,9 +82,7 @@ export class StorageService {
       }
 
       // Get public URL (will require authentication to access due to RLS)
-      const { data: urlData } = supabaseAdmin.storage
-        .from(this.bucketName)
-        .getPublicUrl(data.path);
+      const { data: urlData } = supabaseAdmin.storage.from(this.bucketName).getPublicUrl(data.path);
 
       logger.info(`File uploaded successfully: ${data.path}`);
       return urlData.publicUrl;
@@ -99,7 +97,7 @@ export class StorageService {
 
   /**
    * Download a file from Supabase Storage
-   * 
+   *
    * @param fileUrl - Full URL of the file to download
    * @returns File buffer
    */
@@ -108,9 +106,7 @@ export class StorageService {
       // Extract path from URL
       const path = this.extractPathFromUrl(fileUrl);
 
-      const { data, error } = await supabaseAdmin.storage
-        .from(this.bucketName)
-        .download(path);
+      const { data, error } = await supabaseAdmin.storage.from(this.bucketName).download(path);
 
       if (error) {
         logger.error('Storage download error:', error);
@@ -131,7 +127,7 @@ export class StorageService {
 
   /**
    * Delete a file from Supabase Storage
-   * 
+   *
    * @param fileUrl - Full URL of the file to delete
    */
   async deleteFile(fileUrl: string): Promise<void> {
@@ -139,9 +135,7 @@ export class StorageService {
       // Extract path from URL
       const path = this.extractPathFromUrl(fileUrl);
 
-      const { error } = await supabaseAdmin.storage
-        .from(this.bucketName)
-        .remove([path]);
+      const { error } = await supabaseAdmin.storage.from(this.bucketName).remove([path]);
 
       if (error) {
         logger.error('Storage delete error:', error);
@@ -160,7 +154,7 @@ export class StorageService {
 
   /**
    * Create a signed URL for temporary file access
-   * 
+   *
    * @param fileUrl - Full URL of the file
    * @param expiresIn - Expiration time in seconds (default: 1 hour)
    * @returns Signed URL
@@ -190,7 +184,7 @@ export class StorageService {
 
   /**
    * Extract file path from full Supabase Storage URL
-   * 
+   *
    * @param fileUrl - Full URL from Supabase Storage
    * @returns File path within the bucket
    */
@@ -200,7 +194,7 @@ export class StorageService {
       // URL format: https://<project>.supabase.co/storage/v1/object/public/reports/<path>
       const pathParts = url.pathname.split('/');
       const bucketIndex = pathParts.indexOf(this.bucketName);
-      
+
       if (bucketIndex === -1) {
         throw new Error('Invalid file URL: bucket not found');
       }
@@ -215,4 +209,3 @@ export class StorageService {
 
 // Export singleton instance
 export const storageService = new StorageService();
-

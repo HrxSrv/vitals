@@ -22,7 +22,10 @@ export interface EmbeddingResult {
 
 export interface AIChatProvider {
   complete(messages: ChatMessage[], options?: ChatCompletionOptions): Promise<string>;
-  completeStream(messages: ChatMessage[], options?: ChatCompletionOptions): AsyncGenerator<string, void, unknown>;
+  completeStream(
+    messages: ChatMessage[],
+    options?: ChatCompletionOptions
+  ): AsyncGenerator<string, void, unknown>;
   extractStructured<T = any>(prompt: string, text: string, schema?: string): Promise<T>;
   estimateTokens(text: string): number;
 }

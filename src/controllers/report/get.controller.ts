@@ -54,4 +54,3 @@ export async function getReport(req: Request, res: Response, next: NextFunction)
     next(error);
   }
 }
-

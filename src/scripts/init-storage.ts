@@ -10,9 +10,9 @@ import { logger } from '../utils/logger';
 async function initStorage() {
   try {
     console.log('🚀 Initializing Supabase storage bucket...\n');
-    
+
     await storageService.initializeBucket();
-    
+
     console.log('\n✅ Storage initialization complete!');
     process.exit(0);
   } catch (error) {

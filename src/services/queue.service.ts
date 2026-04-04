@@ -19,17 +19,13 @@ export class QueueService {
    */
   async enqueueProcessReport(data: ProcessReportJobData, options?: JobsOptions): Promise<Job> {
     const queue = getQueue(QUEUE_NAMES.PROCESS_REPORT);
-    
-    const job = await queue.add(
-      'process-report',
-      data,
-      {
-        ...options,
-        jobId: `process-report-${data.reportId}`,
-        removeOnComplete: true,
-        removeOnFail: false,
-      }
-    );
+
+    const job = await queue.add('process-report', data, {
+      ...options,
+      jobId: `process-report-${data.reportId}`,
+      removeOnComplete: true,
+      removeOnFail: false,
+    });
 
     console.log(`Enqueued process-report job ${job.id} for report ${data.reportId}`);
     return job;
@@ -40,17 +36,13 @@ export class QueueService {
    */
   async enqueueUpdateLHM(data: UpdateLHMJobData, options?: JobsOptions): Promise<Job> {
     const queue = getQueue(QUEUE_NAMES.UPDATE_LHM);
-    
-    const job = await queue.add(
-      'update-lhm',
-      data,
-      {
-        ...options,
-        jobId: `update-lhm-${data.profileId}-${Date.now()}`,
-        removeOnComplete: true,
-        removeOnFail: false,
-      }
-    );
+
+    const job = await queue.add('update-lhm', data, {
+      ...options,
+      jobId: `update-lhm-${data.profileId}-${Date.now()}`,
+      removeOnComplete: true,
+      removeOnFail: false,
+    });
 
     console.log(`Enqueued update-lhm job ${job.id} for profile ${data.profileId}`);
     return job;
@@ -64,17 +56,13 @@ export class QueueService {
     options?: JobsOptions
   ): Promise<Job> {
     const queue = getQueue(QUEUE_NAMES.GENERATE_EMBEDDINGS);
-    
-    const job = await queue.add(
-      'generate-embeddings',
-      data,
-      {
-        ...options,
-        jobId: `generate-embeddings-${data.reportId}`,
-        removeOnComplete: true,
-        removeOnFail: false,
-      }
-    );
+
+    const job = await queue.add('generate-embeddings', data, {
+      ...options,
+      jobId: `generate-embeddings-${data.reportId}`,
+      removeOnComplete: true,
+      removeOnFail: false,
+    });
 
     console.log(`Enqueued generate-embeddings job ${job.id} for report ${data.reportId}`);
     return job;
@@ -85,17 +73,13 @@ export class QueueService {
    */
   async enqueueSendDigest(data: SendDigestJobData, options?: JobsOptions): Promise<Job> {
     const queue = getQueue(QUEUE_NAMES.SEND_DIGEST);
-    
-    const job = await queue.add(
-      'send-digest',
-      data,
-      {
-        ...options,
-        jobId: `send-digest-${data.userId}-${Date.now()}`,
-        removeOnComplete: true,
-        removeOnFail: false,
-      }
-    );
+
+    const job = await queue.add('send-digest', data, {
+      ...options,
+      jobId: `send-digest-${data.userId}-${Date.now()}`,
+      removeOnComplete: true,
+      removeOnFail: false,
+    });
 
     console.log(`Enqueued send-digest job ${job.id} for user ${data.userId}`);
     return job;
@@ -104,7 +88,10 @@ export class QueueService {
   /**
    * Get job status by ID
    */
-  async getJobStatus(queueName: QueueName, jobId: string): Promise<{
+  async getJobStatus(
+    queueName: QueueName,
+    jobId: string
+  ): Promise<{
     id: string;
     state: string;
     progress: number | object | string | boolean;
@@ -121,7 +108,7 @@ export class QueueService {
     }
 
     const state = await job.getState();
-    
+
     return {
       id: job.id!,
       state,
@@ -136,13 +123,16 @@ export class QueueService {
   /**
    * Get all jobs in a queue with their states
    */
-  async getQueueJobs(queueName: QueueName, state?: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed') {
+  async getQueueJobs(
+    queueName: QueueName,
+    state?: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed'
+  ) {
     const queue = getQueue(queueName);
-    
+
     if (state) {
       return queue.getJobs([state]);
     }
-    
+
     // Get all jobs from all states
     const [waiting, active, completed, failed, delayed] = await Promise.all([
       queue.getJobs(['waiting']),
@@ -202,10 +192,10 @@ export class QueueService {
   async getQueueStats(queueName: QueueName) {
     const health = await getQueueHealth(queueName);
     const queue = getQueue(queueName);
-    
+
     // Get failed jobs for error analysis
     const failedJobs = await queue.getFailed(0, 10);
-    const recentErrors = failedJobs.map(job => ({
+    const recentErrors = failedJobs.map((job) => ({
       id: job.id,
       failedReason: job.failedReason,
       attemptsMade: job.attemptsMade,
@@ -227,10 +217,10 @@ export class QueueService {
     limit: number = 1000
   ): Promise<string[]> {
     const queue = getQueue(queueName);
-    
+
     // Clean completed jobs older than grace period
     const completedJobs = await queue.clean(grace, limit, 'completed');
-    
+
     // Clean failed jobs older than 7 days
     const failedJobs = await queue.clean(7 * 24 * 3600 * 1000, limit, 'failed');
 
@@ -264,7 +254,7 @@ export class QueueService {
    */
   async getAllQueuesStatus() {
     const queueNames = Object.values(QUEUE_NAMES);
-    
+
     const statuses = await Promise.all(
       queueNames.map(async (queueName) => {
         const stats = await this.getQueueStats(queueName);

@@ -99,7 +99,7 @@ export class LHMRepository {
     try {
       // First, get the current LHM to archive it
       const currentLHM = await this.findByProfileId(profileId);
-      
+
       if (!currentLHM) {
         throw new HttpError(404, 'LHM not found for profile', 'NOT_FOUND');
       }
@@ -112,7 +112,10 @@ export class LHMRepository {
         markdown: data.markdown,
         version: currentLHM.version + 1,
         last_updated_at: new Date().toISOString(),
-        last_report_date: data.lastReportDate?.toISOString().split('T')[0] || currentLHM.lastReportDate?.toISOString().split('T')[0] || null,
+        last_report_date:
+          data.lastReportDate?.toISOString().split('T')[0] ||
+          currentLHM.lastReportDate?.toISOString().split('T')[0] ||
+          null,
         tokens_approx: data.tokensApprox || null,
       };
 
@@ -128,7 +131,9 @@ export class LHMRepository {
         throw new HttpError(500, `Failed to update LHM: ${error.message}`, 'DATABASE_ERROR');
       }
 
-      logger.info(`LHM updated for profile ${profileId}, version ${currentLHM.version} -> ${currentLHM.version + 1}`);
+      logger.info(
+        `LHM updated for profile ${profileId}, version ${currentLHM.version} -> ${currentLHM.version + 1}`
+      );
       return this.mapToLHMDocument(updatedLHM);
     } catch (error) {
       if (error instanceof HttpError) {
@@ -151,13 +156,15 @@ export class LHMRepository {
         version: lhm.version,
       };
 
-      const { error } = await supabaseAdmin
-        .from('lhm_history')
-        .insert(historyData);
+      const { error } = await supabaseAdmin.from('lhm_history').insert(historyData);
 
       if (error) {
         logger.error('Failed to archive LHM version:', error);
-        throw new HttpError(500, `Failed to archive LHM version: ${error.message}`, 'DATABASE_ERROR');
+        throw new HttpError(
+          500,
+          `Failed to archive LHM version: ${error.message}`,
+          'DATABASE_ERROR'
+        );
       }
 
       logger.info(`LHM version ${lhm.version} archived for profile ${lhm.profileId}`);
@@ -240,10 +247,7 @@ export class LHMRepository {
   async delete(profileId: string): Promise<void> {
     try {
       // Delete history first
-      await supabaseAdmin
-        .from('lhm_history')
-        .delete()
-        .eq('profile_id', profileId);
+      await supabaseAdmin.from('lhm_history').delete().eq('profile_id', profileId);
 
       // Delete current LHM
       const { error } = await supabaseAdmin
@@ -278,7 +282,11 @@ export class LHMRepository {
 
       if (error) {
         logger.error('Failed to check LHM existence:', error);
-        throw new HttpError(500, `Failed to check LHM existence: ${error.message}`, 'DATABASE_ERROR');
+        throw new HttpError(
+          500,
+          `Failed to check LHM existence: ${error.message}`,
+          'DATABASE_ERROR'
+        );
       }
 
       return (count || 0) > 0;

@@ -1,6 +1,6 @@
 /**
  * Worker initialization
- * 
+ *
  * This file imports and starts all background workers.
  * Workers should be imported here to ensure they are initialized when the application starts.
  */

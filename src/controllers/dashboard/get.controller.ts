@@ -7,11 +7,7 @@ import { HttpError } from '@utils/httpError';
  * Get dashboard data for a specific profile
  * Query params: profile_id (required)
  */
-export async function getDashboard(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
     const profileId = req.query.profile_id as string;

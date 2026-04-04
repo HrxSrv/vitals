@@ -20,4 +20,3 @@ export const getReportsQuerySchema = z.object({
  */
 export type UploadReportDto = z.infer<typeof uploadReportSchema>;
 export type GetReportsQueryDto = z.infer<typeof getReportsQuerySchema>;
-

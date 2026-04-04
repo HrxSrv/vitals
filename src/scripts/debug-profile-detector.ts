@@ -22,7 +22,10 @@ const mockProfiles: Profile[] = [
 
 const question = "What is Mary Doe's blood pressure?";
 console.log('Question:', question);
-console.log('Profiles:', mockProfiles.map(p => ({ name: p.name, relationship: p.relationship })));
+console.log(
+  'Profiles:',
+  mockProfiles.map((p) => ({ name: p.name, relationship: p.relationship }))
+);
 
 const result = detectProfileFromQuestion(question, mockProfiles, mockProfiles[0]);
 console.log('Result:', result ? { name: result.name, relationship: result.relationship } : 'null');

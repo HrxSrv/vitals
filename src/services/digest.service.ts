@@ -16,11 +16,7 @@ export class DigestService {
    * @param userEmail - User email address
    * @param userName - User name (optional)
    */
-  async generateAndSendDigest(
-    userId: string,
-    userEmail: string,
-    userName?: string
-  ): Promise<void> {
+  async generateAndSendDigest(userId: string, userEmail: string, userName?: string): Promise<void> {
     try {
       logger.info('Generating monthly digest', { userId, userEmail });
 
@@ -38,9 +34,7 @@ export class DigestService {
       );
 
       // Generate family-wide summary using LLM
-      const generatedSummary = await this.generateFamilySummary(
-        profileDigests
-      );
+      const generatedSummary = await this.generateFamilySummary(profileDigests);
 
       // Prepare email data
       const digestData: MonthlyDigestData = {
@@ -79,9 +73,7 @@ export class DigestService {
 
       // Calculate days since last report
       const daysSinceLastReport = lhm.lastReportDate
-        ? Math.floor(
-            (Date.now() - lhm.lastReportDate.getTime()) / (1000 * 60 * 60 * 24)
-          )
+        ? Math.floor((Date.now() - lhm.lastReportDate.getTime()) / (1000 * 60 * 60 * 24))
         : 999;
 
       // Generate summary from LHM using LLM
@@ -134,8 +126,7 @@ Generate a brief, friendly summary suitable for an email. Be empathetic and clea
 
     const systemMessage = {
       role: 'system' as const,
-      content:
-        'You are a health data analyst creating concise summaries for email digests.',
+      content: 'You are a health data analyst creating concise summaries for email digests.',
     };
 
     const userMessage = {
@@ -143,13 +134,10 @@ Generate a brief, friendly summary suitable for an email. Be empathetic and clea
       content: prompt,
     };
 
-    const summary = await getChatProvider().complete(
-      [systemMessage, userMessage],
-      {
-        temperature: 0.7,
-        maxTokens: 200,
-      }
-    );
+    const summary = await getChatProvider().complete([systemMessage, userMessage], {
+      temperature: 0.7,
+      maxTokens: 200,
+    });
 
     return summary.trim();
   }
@@ -170,9 +158,7 @@ Generate a brief, friendly summary suitable for an email. Be empathetic and clea
       '↑ Worsening',
     ];
 
-    return concernIndicators.some((indicator) =>
-      lhmMarkdown.includes(indicator)
-    );
+    return concernIndicators.some((indicator) => lhmMarkdown.includes(indicator));
   }
 
   /**
@@ -212,8 +198,7 @@ Be empathetic, supportive, and clear. This is the opening of an email digest.`;
 
     const systemMessage = {
       role: 'system' as const,
-      content:
-        'You are a health data analyst creating friendly email digest openings.',
+      content: 'You are a health data analyst creating friendly email digest openings.',
     };
 
     const userMessage = {
@@ -221,13 +206,10 @@ Be empathetic, supportive, and clear. This is the opening of an email digest.`;
       content: prompt,
     };
 
-    const summary = await getChatProvider().complete(
-      [systemMessage, userMessage],
-      {
-        temperature: 0.7,
-        maxTokens: 250,
-      }
-    );
+    const summary = await getChatProvider().complete([systemMessage, userMessage], {
+      temperature: 0.7,
+      maxTokens: 250,
+    });
 
     return summary.trim();
   }

@@ -3,6 +3,7 @@ import { embeddingRepository } from '../repositories/embedding.repository';
 import { storageService } from './storage.service';
 import { queueService } from './queue.service';
 import { biomarkerService } from './biomarker.service';
+import { dashboardService } from './dashboard.service';
 import profileRepository from '../repositories/profile.repository';
 import { Report } from '../types/domain.types';
 import { HttpError, NotFoundError, AuthorizationError } from '../utils/httpError';
@@ -14,7 +15,7 @@ import { logger } from '../utils/logger';
 export class ReportService {
   /**
    * Upload a new report PDF
-   * 
+   *
    * @param userId - Authenticated user ID
    * @param profileId - Profile to associate the report with
    * @param file - Uploaded file buffer
@@ -32,11 +33,11 @@ export class ReportService {
     try {
       // Verify profile belongs to user
       const profile = await profileRepository.findById(profileId);
-      
+
       if (!profile) {
         throw new NotFoundError('Profile');
       }
-      
+
       if (profile.userId !== userId) {
         throw new AuthorizationError('Unauthorized to upload reports for this profile');
       }
@@ -53,6 +54,10 @@ export class ReportService {
       });
 
       logger.info(`Report uploaded successfully: ${report.id}`);
+
+      // Invalidate dashboard cache immediately so the frontend sees totalReports > 0
+      // and can show the processing state rather than the empty state
+      dashboardService.invalidateCache(profileId);
 
       // Enqueue background job for OCR processing
       await queueService.enqueueProcessReport({
@@ -75,7 +80,7 @@ export class ReportService {
 
   /**
    * Get all reports for a profile
-   * 
+   *
    * @param userId - Authenticated user ID
    * @param profileId - Profile ID to fetch reports for
    * @returns List of reports
@@ -84,11 +89,11 @@ export class ReportService {
     try {
       // Verify profile belongs to user
       const profile = await profileRepository.findById(profileId);
-      
+
       if (!profile) {
         throw new NotFoundError('Profile');
       }
-      
+
       if (profile.userId !== userId) {
         throw new AuthorizationError('Unauthorized to access reports for this profile');
       }
@@ -105,7 +110,7 @@ export class ReportService {
 
   /**
    * Get a specific report by ID
-   * 
+   *
    * @param userId - Authenticated user ID
    * @param reportId - Report ID to fetch
    * @returns Report details with biomarkers
@@ -113,18 +118,19 @@ export class ReportService {
   async getReportById(userId: string, reportId: string): Promise<Report & { biomarkers?: any[] }> {
     try {
       const report = await reportRepository.findById(reportId);
-      
+
       if (!report) {
         throw new NotFoundError('Report');
       }
-      
+
       if (report.userId !== userId) {
         throw new AuthorizationError('Unauthorized to access this report');
       }
 
       // Fetch biomarkers for this report with definitions
-      const biomarkersWithDefinitions = await biomarkerService.getBiomarkersByReportWithDefinitions(reportId);
-      
+      const biomarkersWithDefinitions =
+        await biomarkerService.getBiomarkersByReportWithDefinitions(reportId);
+
       logger.debug('Fetched biomarkers for report', {
         reportId,
         biomarkerCount: biomarkersWithDefinitions.length,
@@ -164,18 +170,18 @@ export class ReportService {
 
   /**
    * Delete a report
-   * 
+   *
    * @param userId - Authenticated user ID
    * @param reportId - Report ID to delete
    */
   async deleteReport(userId: string, reportId: string): Promise<void> {
     try {
       const report = await reportRepository.findById(reportId);
-      
+
       if (!report) {
         throw new NotFoundError('Report');
       }
-      
+
       if (report.userId !== userId) {
         throw new AuthorizationError('Unauthorized to delete this report');
       }
@@ -207,4 +213,3 @@ export class ReportService {
 
 // Export singleton instance
 export const reportService = new ReportService();
-

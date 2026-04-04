@@ -46,10 +46,7 @@ export class MistralEmbedService {
           const embedding = response.data?.[0]?.embedding;
 
           if (!embedding || !Array.isArray(embedding)) {
-            throw new ExternalServiceError(
-              'Mistral Embed',
-              'No embedding generated'
-            );
+            throw new ExternalServiceError('Mistral Embed', 'No embedding generated');
           }
 
           if (embedding.length !== this.EMBEDDING_DIMENSIONS) {
@@ -179,10 +176,7 @@ export class MistralEmbedService {
         });
 
         if (!response.data || response.data.length !== texts.length) {
-          throw new ExternalServiceError(
-            'Mistral Embed',
-            'Batch embedding count mismatch'
-          );
+          throw new ExternalServiceError('Mistral Embed', 'Batch embedding count mismatch');
         }
 
         return texts.map((text, index) => {
@@ -281,9 +275,7 @@ export class MistralEmbedService {
     logger.info('Text chunked for embedding', {
       originalLength: text.length,
       chunks: chunks.length,
-      avgChunkSize: Math.round(
-        chunks.reduce((sum, c) => sum + c.length, 0) / chunks.length
-      ),
+      avgChunkSize: Math.round(chunks.reduce((sum, c) => sum + c.length, 0) / chunks.length),
     });
 
     return chunks;

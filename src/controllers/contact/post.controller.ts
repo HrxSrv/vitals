@@ -4,7 +4,11 @@ import { logger } from '../../utils/logger';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function postContactController(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function postContactController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   try {
     const { name, email, message } = req.body as { name: string; email: string; message: string };
 

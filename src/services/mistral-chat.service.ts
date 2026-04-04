@@ -36,10 +36,7 @@ export class MistralChatService {
    * @param options - Completion options
    * @returns Assistant's response text
    */
-  async complete(
-    messages: ChatMessage[],
-    options: ChatCompletionOptions = {}
-  ): Promise<string> {
+  async complete(messages: ChatMessage[], options: ChatCompletionOptions = {}): Promise<string> {
     const { temperature = 0.7, maxTokens = 2000 } = options;
 
     try {
@@ -64,10 +61,7 @@ export class MistralChatService {
           const content = response.choices?.[0]?.message?.content;
 
           if (!content || typeof content !== 'string') {
-            throw new ExternalServiceError(
-              'Mistral Chat',
-              'No response generated'
-            );
+            throw new ExternalServiceError('Mistral Chat', 'No response generated');
           }
 
           return content;
@@ -182,11 +176,7 @@ export class MistralChatService {
    * @param schema - Expected JSON schema description
    * @returns Parsed JSON object
    */
-  async extractStructured<T = any>(
-    prompt: string,
-    text: string,
-    schema?: string
-  ): Promise<T> {
+  async extractStructured<T = any>(prompt: string, text: string, schema?: string): Promise<T> {
     try {
       const systemPrompt = schema
         ? `${prompt}\n\nReturn ONLY valid JSON matching this schema: ${schema}`
@@ -219,10 +209,7 @@ export class MistralChatService {
           response: jsonText,
           error: parseError,
         });
-        throw new ExternalServiceError(
-          'Mistral Chat',
-          'Invalid JSON response from LLM'
-        );
+        throw new ExternalServiceError('Mistral Chat', 'Invalid JSON response from LLM');
       }
     } catch (error: any) {
       logger.error('Structured extraction failed', {
@@ -246,10 +233,7 @@ export class MistralChatService {
    * @param maxOutputTokens - Maximum tokens for output
    * @returns Managed messages that fit within context window
    */
-  private manageContextWindow(
-    messages: ChatMessage[],
-    maxOutputTokens: number
-  ): ChatMessage[] {
+  private manageContextWindow(messages: ChatMessage[], maxOutputTokens: number): ChatMessage[] {
     // Reserve tokens for output
     const maxInputTokens = this.MAX_CONTEXT_TOKENS - maxOutputTokens;
 

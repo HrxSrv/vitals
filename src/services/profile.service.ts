@@ -145,6 +145,4 @@ export class ProfileService {
 }
 
 // Export singleton instance
-export default new ProfileService(
-  new ProfileRepository()
-);
+export default new ProfileService(new ProfileRepository());

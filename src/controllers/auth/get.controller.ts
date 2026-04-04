@@ -9,7 +9,7 @@ export async function getSession(req: Request, res: Response, next: NextFunction
   try {
     // Extract token from Authorization header
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         error: {
@@ -21,7 +21,7 @@ export async function getSession(req: Request, res: Response, next: NextFunction
     }
 
     const token = authHeader.replace('Bearer ', '');
-    
+
     // Get session and user data from Supabase Auth
     const user = await authService.getSession(token);
 

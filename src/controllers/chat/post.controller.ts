@@ -5,7 +5,7 @@ import { logger } from '../../utils/logger';
 /**
  * POST /api/chat
  * Stream chat response using Server-Sent Events (SSE)
- * 
+ *
  * Request body:
  * {
  *   message: string;
@@ -13,11 +13,7 @@ import { logger } from '../../utils/logger';
  *   useVectorSearch?: boolean;
  * }
  */
-export async function postChat(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function postChat(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
     const { message, profileId, useVectorSearch } = req.body;

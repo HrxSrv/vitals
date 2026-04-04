@@ -53,7 +53,7 @@ export class DashboardService {
    * Get dashboard data for a profile
    * Returns LHM, latest biomarkers with status, and metadata
    * Cached for 10 minutes for performance
-   * 
+   *
    * @param userId - User ID (for authorization)
    * @param profileId - Profile ID
    * @returns Dashboard data
@@ -64,13 +64,13 @@ export class DashboardService {
 
       // Use cache with 10-minute TTL
       const cacheKey = `dashboard:${profileId}`;
-      
+
       return await getCached(
         cacheKey,
         async () => {
           // Fetch profile and verify ownership
           const profile = await profileRepository.findById(profileId);
-          
+
           if (!profile) {
             throw new HttpError(404, 'Profile not found', 'NOT_FOUND');
           }
@@ -139,9 +139,10 @@ export class DashboardService {
           const totalReports = await reportRepository.countByProfile(profileId);
 
           // Get latest report date
-          const latestReportDate = biomarkersWithStatus.length > 0 && biomarkersWithStatus[0].biomarker.reportDate
-            ? biomarkersWithStatus[0].biomarker.reportDate.toISOString().split('T')[0]
-            : null;
+          const latestReportDate =
+            biomarkersWithStatus.length > 0 && biomarkersWithStatus[0].biomarker.reportDate
+              ? biomarkersWithStatus[0].biomarker.reportDate.toISOString().split('T')[0]
+              : null;
 
           logger.info('Dashboard data fetched successfully', {
             profileId,
@@ -176,7 +177,7 @@ export class DashboardService {
   /**
    * Invalidate dashboard cache for a profile
    * Should be called when profile data changes (new report, etc.)
-   * 
+   *
    * @param profileId - Profile ID
    */
   invalidateCache(profileId: string): void {
@@ -188,7 +189,7 @@ export class DashboardService {
   /**
    * Get dashboard data for all profiles of a user
    * Useful for family-wide overview
-   * 
+   *
    * @param userId - User ID
    * @returns Array of dashboard data for each profile
    */

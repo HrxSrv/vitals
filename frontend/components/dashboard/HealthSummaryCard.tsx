@@ -59,7 +59,7 @@ export function HealthSummaryCard({ profile, summary, alertCount }: HealthSummar
 
         {isProcessing && (
           <p className="text-white/60 text-[10px] mt-2.5 text-center">
-            Your report is being processed — results will appear shortly
+            Your report is being processed, results will appear shortly!
           </p>
         )}
       </div>

@@ -9,6 +9,8 @@ export interface ExtractedBiomarker {
   value: number;
   unit: string;
   category?: string;
+  refRangeLow?: number;
+  refRangeHigh?: number;
 }
 
 export interface BiomarkerExtractionResult {
@@ -22,36 +24,37 @@ export class BiomarkerService {
    * @param ocrMarkdown - Raw OCR markdown output from report
    * @returns Extracted biomarkers and report date
    */
-  async extractFromOCR(
-    ocrMarkdown: string
-  ): Promise<BiomarkerExtractionResult> {
+  async extractFromOCR(ocrMarkdown: string): Promise<BiomarkerExtractionResult> {
     logger.info('Extracting biomarkers from OCR markdown');
 
     const prompt = `You are a medical lab report analyzer. Extract all biomarker values from the following lab report text.
 
 Instructions:
-1. Extract ONLY biomarker names, values, and units
+1. Extract ONLY biomarker names, values, units, and reference ranges
 2. Include the report date if present
 3. Return data as JSON with this exact structure:
 {
   "reportDate": "YYYY-MM-DD" or null,
   "biomarkers": [
     {
-      "name": "biomarker name as written in report",
+      "name": "biomarker name exactly as written in report, including any method qualifiers in parentheses",
       "value": numeric value only,
       "unit": "unit of measurement",
-      "category": "diabetes|kidney|liver|lipid|thyroid|blood_count|vitamins|hormones|other" (optional, best guess)
+      "category": "diabetes|kidney|liver|lipid|thyroid|blood_count|vitamins|hormones|other",
+      "refRangeLow": numeric lower bound of reference range or null,
+      "refRangeHigh": numeric upper bound of reference range or null
     }
   ]
 }
 
 Rules:
 - Extract ALL biomarkers found in the report
-- Use exact biomarker names as they appear in the report
-- Convert values to numbers (remove commas, handle ranges by taking the actual value)
-- Include units exactly as shown (mg/dL, g/dL, %, etc.)
-- If a biomarker has multiple values, create separate entries
-- Ignore reference ranges - only extract actual patient values
+- Preserve the full biomarker name exactly as written, including method qualifiers like "(Electrical Impedance)", "(RBC Histogram)", "(Enzymatic)", etc.
+- Convert values to numbers (remove commas, handle ranges by taking the actual patient value)
+- Include units exactly as shown (mg/dL, g/dL, %, fL, etc.)
+- Extract reference ranges if shown (e.g. "80-100" means refRangeLow=80, refRangeHigh=100)
+- If a biomarker has multiple sub-measurements with different methods, create separate entries for each
+- Ignore duplicate entries for the same biomarker+method combination
 - Return ONLY valid JSON, no additional text
 
 Lab Report Text:
@@ -64,7 +67,7 @@ ${ocrMarkdown}`;
       }>(
         prompt,
         ocrMarkdown,
-        '{ reportDate?: string, biomarkers: Array<{ name: string, value: number, unit: string, category?: string }> }'
+        '{ reportDate?: string, biomarkers: Array<{ name: string, value: number, unit: string, category?: string, refRangeLow?: number, refRangeHigh?: number }> }'
       );
 
       logger.info('Biomarker extraction successful', {
@@ -104,45 +107,81 @@ ${ocrMarkdown}`;
       profileId,
     });
 
-    // Get all known biomarker definitions for LLM fallback
-    const definitions = await biomarkerRepository.getAllDefinitions();
-    const knownBiomarkers = definitions.map((d) => d.nameNormalized);
+    // Normalize biomarker names — no longer needs the definitions list as a hint,
+    // since we auto-create definitions from extracted data
+    const normalizedBiomarkers = extractedBiomarkers.map((biomarker) => {
+      const nameNormalized = biomarkerNormalizer.normalize(biomarker.name);
+      const category = biomarker.category;
 
-    // Normalize biomarker names
-    const normalizedBiomarkers = await Promise.all(
-      extractedBiomarkers.map(async (biomarker) => {
-        const nameNormalized = await biomarkerNormalizer.normalize(
-          biomarker.name,
-          knownBiomarkers
-        );
+      return {
+        reportId,
+        userId,
+        profileId,
+        name: biomarker.name,
+        nameNormalized,
+        category,
+        value: biomarker.value,
+        unit: biomarker.unit,
+        reportDate,
+        refRangeLow: biomarker.refRangeLow,
+        refRangeHigh: biomarker.refRangeHigh,
+      };
+    });
 
-        // Try to get definition for category if not provided
-        let category = biomarker.category;
-        if (!category) {
-          const definition = await biomarkerRepository.getDefinition(
-            nameNormalized
-          );
-          category = definition?.category;
+    // Deduplicate within this report — keep first occurrence of each nameNormalized.
+    // A single CBC can have multiple sub-measurements (e.g. RBC by impedance + laser)
+    // that normalize to the same canonical name; only store one per report.
+    const seenNames = new Set<string>();
+    const uniqueBiomarkers = normalizedBiomarkers.filter((b) => {
+      if (seenNames.has(b.nameNormalized)) return false;
+      seenNames.add(b.nameNormalized);
+      return true;
+    });
+
+    // Auto-upsert definitions for any biomarker not already in the definitions table.
+    // This means we never need a predefined list — definitions grow from real report data.
+    await Promise.all(
+      uniqueBiomarkers.map(async (b) => {
+        const existing = await biomarkerRepository.getDefinition(b.nameNormalized);
+        if (!existing) {
+          // Build a display name from the raw name (title-case, clean up underscores)
+          const displayName = b.name
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+
+          await biomarkerRepository.upsertDefinition({
+            nameNormalized: b.nameNormalized,
+            displayName,
+            category: b.category ?? 'other',
+            unit: b.unit,
+            refRangeLow: b.refRangeLow,
+            refRangeHigh: b.refRangeHigh,
+          });
+
+          logger.info('Auto-created biomarker definition', {
+            nameNormalized: b.nameNormalized,
+            displayName,
+          });
+        } else if (
+          existing.refRangeLow === undefined &&
+          existing.refRangeHigh === undefined &&
+          (b.refRangeLow !== undefined || b.refRangeHigh !== undefined)
+        ) {
+          // Backfill reference ranges if we now have them but didn't before
+          await biomarkerRepository.upsertDefinition({
+            nameNormalized: b.nameNormalized,
+            displayName: existing.displayName,
+            category: existing.category ?? b.category ?? 'other',
+            unit: existing.unit ?? b.unit,
+            refRangeLow: b.refRangeLow,
+            refRangeHigh: b.refRangeHigh,
+          });
         }
-
-        return {
-          reportId,
-          userId,
-          profileId,
-          name: biomarker.name,
-          nameNormalized,
-          category,
-          value: biomarker.value,
-          unit: biomarker.unit,
-          reportDate,
-        };
       })
     );
 
     // Store in database
-    const storedBiomarkers = await biomarkerRepository.createBatch(
-      normalizedBiomarkers
-    );
+    const storedBiomarkers = await biomarkerRepository.createBatch(uniqueBiomarkers);
 
     logger.info('Biomarkers stored successfully', {
       count: storedBiomarkers.length,
@@ -181,7 +220,11 @@ ${ocrMarkdown}`;
 
     logger.info('Report date determined', {
       reportId,
-      source: userProvidedDate ? 'user-provided' : extraction.reportDate ? 'extracted' : 'upload-date',
+      source: userProvidedDate
+        ? 'user-provided'
+        : extraction.reportDate
+          ? 'extracted'
+          : 'upload-date',
       date: reportDate.toISOString().split('T')[0],
     });
 
@@ -210,18 +253,14 @@ ${ocrMarkdown}`;
   /**
    * Get biomarkers for a profile with definitions
    */
-  async getBiomarkersWithDefinitions(
-    profileId: string
-  ): Promise<BiomarkerWithDefinition[]> {
+  async getBiomarkersWithDefinitions(profileId: string): Promise<BiomarkerWithDefinition[]> {
     return biomarkerRepository.findByProfileWithDefinitions(profileId);
   }
 
   /**
    * Get latest biomarkers for a profile (one per biomarker type)
    */
-  async getLatestBiomarkers(
-    profileId: string
-  ): Promise<BiomarkerWithDefinition[]> {
+  async getLatestBiomarkers(profileId: string): Promise<BiomarkerWithDefinition[]> {
     return biomarkerRepository.findLatestByProfile(profileId);
   }
 
@@ -329,12 +368,12 @@ ${ocrMarkdown}`;
     // If no reference ranges, use simple value comparison
     if (!definition || (!definition.refRangeLow && !definition.refRangeHigh)) {
       const percentChange = ((current.value - previous.value) / previous.value) * 100;
-      
+
       // Consider stable if change is less than 5%
       if (Math.abs(percentChange) < 5) {
         return 'stable';
       }
-      
+
       // For most biomarkers, lower is better (e.g., cholesterol, glucose)
       // This is a simplification - ideally we'd have metadata about this
       return current.value < previous.value ? 'improving' : 'worsening';
@@ -390,22 +429,21 @@ ${ocrMarkdown}`;
   async getBiomarkerTrend(
     profileId: string,
     nameNormalized: string
-  ): Promise<Array<{
-    value: number;
-    unit: string;
-    reportDate?: Date;
-    status: 'normal' | 'high' | 'low' | 'borderline';
-    refRangeLow?: number;
-    refRangeHigh?: number;
-    trend?: 'improving' | 'worsening' | 'stable' | 'new';
-  }>> {
+  ): Promise<
+    Array<{
+      value: number;
+      unit: string;
+      reportDate?: Date;
+      status: 'normal' | 'high' | 'low' | 'borderline';
+      refRangeLow?: number;
+      refRangeHigh?: number;
+      trend?: 'improving' | 'worsening' | 'stable' | 'new';
+    }>
+  > {
     logger.info('Getting biomarker trend', { profileId, nameNormalized });
 
     // Get historical values with definitions
-    const history = await biomarkerRepository.findHistoricalValues(
-      profileId,
-      nameNormalized
-    );
+    const history = await biomarkerRepository.findHistoricalValues(profileId, nameNormalized);
 
     if (history.length === 0) {
       logger.info('No historical data found for biomarker', {

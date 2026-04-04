@@ -1,159 +1,79 @@
 import { BIOMARKER_ALIASES } from '../constants/biomarkers';
-import { getChatProvider } from '../services/ai-provider';
 import { logger } from './logger';
 
 /**
- * Normalize a biomarker name to its canonical form
- * Uses rule-based matching first, then falls back to LLM for unknown names
+ * Normalize a biomarker name to a consistent snake_case canonical form.
+ * Uses alias lookup for well-known names, then falls back to snake_case
+ * preserving any method qualifiers in parentheses.
  */
 export class BiomarkerNormalizer {
-  /**
-   * Normalize a biomarker name using rule-based matching
-   * @param name - Raw biomarker name from lab report
-   * @returns Normalized biomarker name or null if not found
-   */
   private normalizeWithRules(name: string): string | null {
-    // Clean and normalize the input
-    const cleaned = name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/[()]/g, '') // Remove parentheses
-      .replace(/[-_]/g, ' '); // Replace dashes and underscores with spaces
+    const base = name.toLowerCase().trim().replace(/\s+/g, ' ');
 
-    // Direct lookup
-    if (BIOMARKER_ALIASES[cleaned]) {
-      return BIOMARKER_ALIASES[cleaned];
-    }
+    // 1. Try with parentheses preserved (e.g. "rbc(electrical impedance)")
+    if (BIOMARKER_ALIASES[base]) return BIOMARKER_ALIASES[base];
 
-    // Try without special characters
-    const withoutSpecial = cleaned.replace(/[^a-z0-9\s]/g, '');
-    if (BIOMARKER_ALIASES[withoutSpecial]) {
-      return BIOMARKER_ALIASES[withoutSpecial];
-    }
+    // 2. Try with dashes/underscores replaced but parentheses kept
+    const withSpaces = base.replace(/[-_]/g, ' ');
+    if (BIOMARKER_ALIASES[withSpaces]) return BIOMARKER_ALIASES[withSpaces];
 
-    // Try partial matches (for cases like "Glucose (Fasting)" -> "glucose fasting")
-    for (const [alias, normalized] of Object.entries(BIOMARKER_ALIASES)) {
-      if (cleaned.includes(alias) || alias.includes(cleaned)) {
-        return normalized;
+    // 3. Try stripping parentheses (e.g. "glucose (fasting)" → "glucose fasting")
+    const withoutParens = withSpaces.replace(/[()]/g, '').replace(/\s+/g, ' ').trim();
+    if (BIOMARKER_ALIASES[withoutParens]) return BIOMARKER_ALIASES[withoutParens];
+
+    // 4. Try without all special characters
+    const withoutSpecial = withoutParens.replace(/[^a-z0-9\s]/g, '');
+    if (BIOMARKER_ALIASES[withoutSpecial]) return BIOMARKER_ALIASES[withoutSpecial];
+
+    // 5. Partial match — only when there's no parenthetical qualifier.
+    // A name like "RBC(Electrical Impedance)" is a distinct measurement and
+    // must NOT be collapsed to the generic "rbc" alias.
+    const hasQualifier = /\(/.test(base);
+    if (!hasQualifier) {
+      let bestMatch: string | null = null;
+      let bestLength = 0;
+      for (const [alias, normalized] of Object.entries(BIOMARKER_ALIASES)) {
+        if (withoutParens.includes(alias) || alias.includes(withoutParens)) {
+          if (alias.length > bestLength) {
+            bestMatch = normalized;
+            bestLength = alias.length;
+          }
+        }
       }
+      if (bestMatch) return bestMatch;
     }
 
     return null;
   }
 
   /**
-   * Normalize a biomarker name using LLM fallback
-   * @param name - Raw biomarker name from lab report
-   * @param knownBiomarkers - List of known normalized biomarker names from database
-   * @returns Normalized biomarker name or the original name if LLM can't match
+   * Normalize a biomarker name to its canonical snake_case form.
+   * Alias lookup runs first; unknown names are converted to snake_case
+   * preserving any method qualifier (e.g. "RBC(Electrical Impedance)" → "rbc_electrical_impedance").
    */
-  private async normalizeWithLLM(
-    name: string,
-    knownBiomarkers: string[]
-  ): Promise<string> {
-    try {
-      logger.info('Using LLM fallback for biomarker normalization', { name });
-
-      const prompt = `You are a medical lab report analyzer. Given a biomarker name from a lab report, match it to the closest canonical biomarker name from the provided list.
-
-Known biomarker names:
-${knownBiomarkers.join(', ')}
-
-Rules:
-1. Return ONLY the exact matching canonical name from the list above
-2. If no good match exists, return the input name in snake_case format
-3. Consider common medical abbreviations and synonyms
-4. Do not add explanations or additional text
-
-Biomarker name to normalize: "${name}"
-
-Normalized name:`;
-
-      const response = await getChatProvider().complete(
-        [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        {
-          temperature: 0.1, // Low temperature for consistent matching
-          maxTokens: 50,
-        }
-      );
-
-      const normalized = response.trim().toLowerCase().replace(/\s+/g, '_');
-
-      logger.info('LLM normalization result', {
-        original: name,
-        normalized,
-      });
-
-      return normalized;
-    } catch (error) {
-      logger.error('LLM normalization failed, using original name', {
-        name,
-        error,
-      });
-
-      // Fallback: convert to snake_case
-      return name.toLowerCase().trim().replace(/\s+/g, '_');
-    }
-  }
-
-  /**
-   * Normalize a biomarker name to its canonical form
-   * @param name - Raw biomarker name from lab report
-   * @param knownBiomarkers - Optional list of known normalized biomarker names from database
-   * @returns Normalized biomarker name
-   */
-  async normalize(
-    name: string,
-    knownBiomarkers?: string[]
-  ): Promise<string> {
-    // Try rule-based matching first
-    const ruleBasedResult = this.normalizeWithRules(name);
-
-    if (ruleBasedResult) {
-      logger.debug('Biomarker normalized with rules', {
-        original: name,
-        normalized: ruleBasedResult,
-      });
-      return ruleBasedResult;
+  normalize(name: string): string {
+    const ruleResult = this.normalizeWithRules(name);
+    if (ruleResult) {
+      logger.debug('Biomarker normalized with rules', { original: name, normalized: ruleResult });
+      return ruleResult;
     }
 
-    // If no rule match and we have known biomarkers, try LLM
-    if (knownBiomarkers && knownBiomarkers.length > 0) {
-      return this.normalizeWithLLM(name, knownBiomarkers);
-    }
+    // snake_case fallback — preserves qualifier content
+    const fallback = name
+      .toLowerCase()
+      .trim()
+      .replace(/[()]/g, '_')
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
 
-    // Final fallback: convert to snake_case
-    const fallback = name.toLowerCase().trim().replace(/\s+/g, '_');
-
-    logger.warn('Biomarker normalization fallback to snake_case', {
-      original: name,
-      normalized: fallback,
-    });
-
+    logger.debug('Biomarker normalized to snake_case', { original: name, normalized: fallback });
     return fallback;
   }
 
-  /**
-   * Normalize multiple biomarker names in batch
-   * @param names - Array of raw biomarker names
-   * @param knownBiomarkers - Optional list of known normalized biomarker names
-   * @returns Array of normalized biomarker names
-   */
-  async normalizeBatch(
-    names: string[],
-    knownBiomarkers?: string[]
-  ): Promise<string[]> {
-    return Promise.all(
-      names.map((name) => this.normalize(name, knownBiomarkers))
-    );
+  normalizeBatch(names: string[]): string[] {
+    return names.map((n) => this.normalize(n));
   }
 }
 
-// Export singleton instance
 export const biomarkerNormalizer = new BiomarkerNormalizer();

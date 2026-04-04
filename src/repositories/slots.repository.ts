@@ -16,11 +16,7 @@ export class SlotsRepository {
    * Get the remaining slot count
    */
   async getRemaining(): Promise<number> {
-    const { data, error } = await db
-      .from('slots')
-      .select('remaining')
-      .eq('id', 1)
-      .single();
+    const { data, error } = await db.from('slots').select('remaining').eq('id', 1).single();
 
     if (error) {
       throw new HttpError(500, `Failed to fetch slots: ${error.message}`, 'DATABASE_ERROR');
@@ -64,7 +60,11 @@ export class SlotsRepository {
       .insert({ changed_by: changedBy, old_value: oldValue, new_value: value });
 
     if (auditError) {
-      throw new HttpError(500, `Failed to insert audit log: ${auditError.message}`, 'DATABASE_ERROR');
+      throw new HttpError(
+        500,
+        `Failed to insert audit log: ${auditError.message}`,
+        'DATABASE_ERROR'
+      );
     }
 
     return (data as { remaining: number }).remaining;

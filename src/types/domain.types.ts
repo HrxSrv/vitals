@@ -10,13 +10,13 @@ export interface User {
   name?: string;
 }
 
-export type RelationshipType = 
-  | 'self' 
-  | 'mother' 
-  | 'father' 
-  | 'spouse' 
-  | 'grandmother' 
-  | 'grandfather' 
+export type RelationshipType =
+  | 'self'
+  | 'mother'
+  | 'father'
+  | 'spouse'
+  | 'grandmother'
+  | 'grandfather'
   | 'other';
 
 export type GenderType = 'male' | 'female' | 'other';

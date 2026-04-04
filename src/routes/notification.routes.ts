@@ -7,11 +7,7 @@ import { updateNotificationPreferencesSchema } from '../validations/notification
 const router: RouterType = Router();
 
 // GET /api/settings/notifications - Get notification preferences
-router.get(
-  '/',
-  authMiddleware,
-  notificationController.getNotificationPreferences
-);
+router.get('/', authMiddleware, notificationController.getNotificationPreferences);
 
 // PATCH /api/settings/notifications - Update notification preferences
 router.patch(

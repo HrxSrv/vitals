@@ -30,7 +30,7 @@ try {
   const { lhmService } = require('../services/lhm.service');
   const hasNeedsCompression = typeof lhmService.needsCompression === 'function';
   const hasCompressLHM = typeof lhmService.compressLHM === 'function';
-  
+
   console.log(`   lhmService.needsCompression: ${hasNeedsCompression ? 'EXISTS ✓' : 'MISSING ✗'}`);
   console.log(`   lhmService.compressLHM: ${hasCompressLHM ? 'EXISTS ✓' : 'MISSING ✗'}`);
 } catch (error) {
@@ -44,11 +44,11 @@ console.log('✅ Test 3: Worker integration exists');
 try {
   const fs = require('fs');
   const workerCode = fs.readFileSync('src/workers/update-lhm.worker.ts', 'utf-8');
-  
+
   const hasNeedsCompressionCheck = workerCode.includes('needsCompression');
   const hasCompressLHMCall = workerCode.includes('compressLHM');
   const hasCompressionLogic = workerCode.includes('if (needsCompression)');
-  
+
   console.log(`   Worker checks needsCompression: ${hasNeedsCompressionCheck ? 'YES ✓' : 'NO ✗'}`);
   console.log(`   Worker calls compressLHM: ${hasCompressLHMCall ? 'YES ✓' : 'NO ✗'}`);
   console.log(`   Worker has compression logic: ${hasCompressionLogic ? 'YES ✓' : 'NO ✗'}`);
@@ -62,13 +62,13 @@ console.log('✅ Test 4: Compression implementation details');
 try {
   const fs = require('fs');
   const serviceCode = fs.readFileSync('src/services/lhm.service.ts', 'utf-8');
-  
+
   const hasCompressionPrompt = serviceCode.includes('compressionPrompt');
   const preservesCurrentSnapshot = serviceCode.includes('Current Health Snapshot');
   const preservesLast4Entries = serviceCode.includes('Last 4 entries');
   const summarizesOlder = serviceCode.includes('Older entries');
   const hasValidation = serviceCode.includes('validateLHM');
-  
+
   console.log(`   Has compression prompt: ${hasCompressionPrompt ? 'YES ✓' : 'NO ✗'}`);
   console.log(`   Preserves current snapshot: ${preservesCurrentSnapshot ? 'YES ✓' : 'NO ✗'}`);
   console.log(`   Preserves last 4 entries: ${preservesLast4Entries ? 'YES ✓' : 'NO ✗'}`);

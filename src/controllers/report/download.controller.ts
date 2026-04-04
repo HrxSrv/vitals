@@ -6,11 +6,7 @@ import { storageService } from '@services/storage.service';
  * GET /api/reports/:id/download
  * Download the original PDF file for a report
  */
-export async function downloadReport(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function downloadReport(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.user!.id;
     const { id: reportId } = req.params;
