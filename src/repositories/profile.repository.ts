@@ -96,8 +96,7 @@ export class ProfileRepository {
     const updateData: TablesUpdate<'profiles'> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.relationship !== undefined)
-      updateData.relationship = data.relationship;
+    if (data.relationship !== undefined) updateData.relationship = data.relationship;
     if (data.dob !== undefined) updateData.dob = data.dob;
     if (data.gender !== undefined) updateData.gender = data.gender;
 
@@ -127,10 +126,7 @@ export class ProfileRepository {
    * - Report embeddings (via FK cascade)
    */
   async delete(profileId: string): Promise<void> {
-    const { error } = await supabaseAdmin
-      .from('profiles')
-      .delete()
-      .eq('id', profileId);
+    const { error } = await supabaseAdmin.from('profiles').delete().eq('id', profileId);
 
     if (error) {
       throw new HttpError(500, `Failed to delete profile: ${error.message}`, 'DATABASE_ERROR');
@@ -168,7 +164,11 @@ export class ProfileRepository {
       if (error.code === 'PGRST116') {
         return null;
       }
-      throw new HttpError(500, `Failed to fetch default profile: ${error.message}`, 'DATABASE_ERROR');
+      throw new HttpError(
+        500,
+        `Failed to fetch default profile: ${error.message}`,
+        'DATABASE_ERROR'
+      );
     }
 
     return this.mapToProfile(data);

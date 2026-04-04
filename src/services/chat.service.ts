@@ -46,11 +46,7 @@ export class ChatService {
       }
 
       // Detect target profile from question
-      const targetProfile = await this.detectTargetProfile(
-        message,
-        profiles,
-        options.profileId
-      );
+      const targetProfile = this.detectTargetProfile(message, profiles, options.profileId);
 
       logger.info('Target profile detected', {
         profileId: targetProfile.id,
@@ -59,11 +55,7 @@ export class ChatService {
       });
 
       // Build context for LLM
-      const context = await this.buildContext(
-        targetProfile,
-        message,
-        options
-      );
+      const context = await this.buildContext(targetProfile, message, options);
 
       // Build system prompt with health data context
       const systemPrompt = this.buildSystemPrompt(targetProfile, context);
@@ -110,11 +102,11 @@ export class ChatService {
    * Detect which profile the question is about
    * Uses keyword matching and falls back to provided profileId or default profile
    */
-  private async detectTargetProfile(
+  private detectTargetProfile(
     message: string,
     profiles: Profile[],
     providedProfileId?: string
-  ): Promise<Profile> {
+  ): Profile {
     // If profile ID is explicitly provided, use it
     if (providedProfileId) {
       const profile = profiles.find((p) => p.id === providedProfileId);
@@ -128,11 +120,7 @@ export class ChatService {
 
     // Try to detect profile from question keywords
     const defaultProfile = profiles.find((p) => p.isDefault) || profiles[0];
-    const detectedProfile = detectProfileFromQuestion(
-      message,
-      profiles,
-      defaultProfile
-    );
+    const detectedProfile = detectProfileFromQuestion(message, profiles, defaultProfile);
 
     if (!detectedProfile) {
       throw new HttpError(

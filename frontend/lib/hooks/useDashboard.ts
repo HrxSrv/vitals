@@ -8,5 +8,11 @@ export const useDashboard = (profileId: string | null) =>
     queryKey: ['dashboard', profileId],
     queryFn: () => fetchDashboard(profileId!),
     enabled: !!profileId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    // Poll every 5s while a report is being processed (reports exist but no biomarkers yet)
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      const isProcessing = data && data.summary.totalReports > 0 && data.summary.biomarkerCount === 0;
+      return isProcessing ? 5000 : false;
+    },
   });

@@ -16,7 +16,7 @@ export const supabaseAdmin: SupabaseClient<Database> = new Proxy({} as SupabaseC
           'Missing Supabase environment variables. Please check your .env file contains SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
         );
       }
-      
+
       _supabaseAdmin = createClient<Database>(
         process.env.SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -35,7 +35,7 @@ export const supabaseAdmin: SupabaseClient<Database> = new Proxy({} as SupabaseC
 /**
  * Create a Supabase client for user-specific operations with RLS
  * This client respects Row Level Security policies
- * 
+ *
  * @param accessToken - User's Supabase access token from Authorization header
  * @returns Supabase client configured for the authenticated user
  */
@@ -46,21 +46,17 @@ export function createUserSupabaseClient(accessToken: string): SupabaseClient<Da
     );
   }
 
-  return createClient<Database>(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+  return createClient<Database>(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
 
 /**

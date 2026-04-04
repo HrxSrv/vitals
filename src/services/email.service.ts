@@ -61,10 +61,7 @@ export class EmailService {
           });
 
           if (!result.data) {
-            throw new ExternalServiceError(
-              'Resend',
-              'Failed to send email: No response data'
-            );
+            throw new ExternalServiceError('Resend', 'Failed to send email: No response data');
           }
 
           logger.info('Monthly digest email sent successfully', {
@@ -98,10 +95,7 @@ export class EmailService {
         throw error;
       }
 
-      throw new ExternalServiceError(
-        'Resend',
-        error.message || 'Failed to send email'
-      );
+      throw new ExternalServiceError('Resend', error.message || 'Failed to send email');
     }
   }
 
@@ -115,8 +109,8 @@ export class EmailService {
       <div style="margin-bottom: 24px; padding: 16px; background-color: ${
         profile.hasConcerns ? '#fef2f2' : '#f9fafb'
       }; border-radius: 8px; border-left: 4px solid ${
-          profile.hasConcerns ? '#ef4444' : '#10b981'
-        };">
+        profile.hasConcerns ? '#ef4444' : '#10b981'
+      };">
         <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 18px;">
           ${profile.name} ${profile.hasConcerns ? '⚠️' : '✓'}
         </h3>
@@ -235,10 +229,8 @@ Always consult with healthcare professionals for medical advice.
   /**
    * Health check for email service
    */
-  async healthCheck(): Promise<boolean> {
+  healthCheck(): boolean {
     try {
-      // Resend doesn't have a dedicated health check endpoint
-      // We'll just verify the API key is set
       return !!process.env.RESEND_API_KEY;
     } catch (error) {
       logger.error('Email service health check failed', { error });

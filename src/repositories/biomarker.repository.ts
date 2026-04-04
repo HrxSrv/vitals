@@ -14,6 +14,8 @@ export interface CreateBiomarkerData {
   value: number;
   unit: string;
   reportDate?: Date;
+  refRangeLow?: number;
+  refRangeHigh?: number;
 }
 
 export class BiomarkerRepository {
@@ -35,6 +37,8 @@ export class BiomarkerRepository {
         value: data.value,
         unit: data.unit,
         report_date: data.reportDate?.toISOString().split('T')[0],
+        ref_range_low: data.refRangeLow ?? null,
+        ref_range_high: data.refRangeHigh ?? null,
       })
       .select()
       .single();
@@ -68,6 +72,8 @@ export class BiomarkerRepository {
           value: b.value,
           unit: b.unit,
           report_date: b.reportDate?.toISOString().split('T')[0],
+          ref_range_low: b.refRangeLow ?? null,
+          ref_range_high: b.refRangeHigh ?? null,
         }))
       )
       .select();
@@ -164,7 +170,7 @@ export class BiomarkerRepository {
 
     // Use raw SQL query since we removed the foreign key relationship
     const { data, error } = await supabase.rpc('get_biomarkers_by_report', {
-      p_report_id: reportId
+      p_report_id: reportId,
     });
 
     if (error) {
@@ -184,31 +190,32 @@ export class BiomarkerRepository {
       unit: row.unit,
       reportDate: row.report_date ? new Date(row.report_date) : undefined,
       createdAt: new Date(row.created_at),
-      definition: row.def_name_normalized ? {
-        nameNormalized: row.def_name_normalized,
-        displayName: row.def_display_name,
-        category: row.def_category,
-        unit: row.def_unit,
-        refRangeLow: row.def_ref_range_low,
-        refRangeHigh: row.def_ref_range_high,
-        criticalLow: row.def_critical_low,
-        criticalHigh: row.def_critical_high,
-        description: row.def_description,
-      } : undefined,
+      definition: row.def_name_normalized
+        ? {
+            nameNormalized: row.def_name_normalized,
+            displayName: row.def_display_name,
+            category: row.def_category,
+            unit: row.def_unit,
+            // Prefer per-row ref ranges (unit-aligned) over definition ranges
+            refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
+            refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
+            criticalLow: row.def_critical_low,
+            criticalHigh: row.def_critical_high,
+            description: row.def_description,
+          }
+        : undefined,
     }));
   }
 
   /**
    * Get biomarkers with their definitions joined
    */
-  async findByProfileWithDefinitions(
-    profileId: string
-  ): Promise<BiomarkerWithDefinition[]> {
+  async findByProfileWithDefinitions(profileId: string): Promise<BiomarkerWithDefinition[]> {
     logger.debug('Finding biomarkers with definitions', { profileId });
 
     // Use raw SQL query since we removed the foreign key relationship
     const { data, error } = await supabase.rpc('get_biomarkers_with_definitions', {
-      p_profile_id: profileId
+      p_profile_id: profileId,
     });
 
     if (error) {
@@ -231,42 +238,51 @@ export class BiomarkerRepository {
       unit: row.unit,
       reportDate: row.report_date ? new Date(row.report_date) : undefined,
       createdAt: new Date(row.created_at),
-      definition: row.def_name_normalized ? {
-        nameNormalized: row.def_name_normalized,
-        displayName: row.def_display_name,
-        category: row.def_category,
-        unit: row.def_unit,
-        refRangeLow: row.def_ref_range_low,
-        refRangeHigh: row.def_ref_range_high,
-        criticalLow: row.def_critical_low,
-        criticalHigh: row.def_critical_high,
-        description: row.def_description,
-      } : undefined,
+      definition: row.def_name_normalized
+        ? {
+            nameNormalized: row.def_name_normalized,
+            displayName: row.def_display_name,
+            category: row.def_category,
+            unit: row.def_unit,
+            // Prefer per-row ref ranges (unit-aligned) over definition ranges
+            refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
+            refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
+            criticalLow: row.def_critical_low,
+            criticalHigh: row.def_critical_high,
+            description: row.def_description,
+          }
+        : undefined,
     }));
   }
 
   /**
    * Get latest biomarkers for a profile (one per biomarker type)
    */
-  async findLatestByProfile(
-    profileId: string
-  ): Promise<BiomarkerWithDefinition[]> {
+  async findLatestByProfile(profileId: string): Promise<BiomarkerWithDefinition[]> {
     logger.debug('Finding latest biomarkers by profile', { profileId });
 
     // Get all biomarkers with definitions
     const biomarkers = await this.findByProfileWithDefinitions(profileId);
 
-    // Group by normalized name and keep only the latest
+    // Step 1: Deduplicate within each report — keep only one entry per (nameNormalized, reportId).
+    // A single CBC report can produce multiple sub-measurements that normalize to the same name.
+    const seenInReport = new Set<string>();
+    const deduplicated = biomarkers.filter((b) => {
+      const key = `${b.nameNormalized}::${b.reportId}`;
+      if (seenInReport.has(key)) return false;
+      seenInReport.add(key);
+      return true;
+    });
+
+    // Step 2: Group by normalized name and keep only the latest across reports
     const latestMap = new Map<string, BiomarkerWithDefinition>();
 
-    for (const biomarker of biomarkers) {
+    for (const biomarker of deduplicated) {
       const existing = latestMap.get(biomarker.nameNormalized);
 
       if (
         !existing ||
-        (biomarker.reportDate &&
-          existing.reportDate &&
-          biomarker.reportDate > existing.reportDate)
+        (biomarker.reportDate && existing.reportDate && biomarker.reportDate > existing.reportDate)
       ) {
         latestMap.set(biomarker.nameNormalized, biomarker);
       }
@@ -332,10 +348,7 @@ export class BiomarkerRepository {
   async deleteByReport(reportId: string): Promise<void> {
     logger.debug('Deleting biomarkers by report', { reportId });
 
-    const { error } = await supabase
-      .from('biomarkers')
-      .delete()
-      .eq('report_id', reportId);
+    const { error } = await supabase.from('biomarkers').delete().eq('report_id', reportId);
 
     if (error) {
       logger.error('Failed to delete biomarkers', { error, reportId });
@@ -349,14 +362,42 @@ export class BiomarkerRepository {
   async deleteByProfile(profileId: string): Promise<void> {
     logger.debug('Deleting biomarkers by profile', { profileId });
 
-    const { error } = await supabase
-      .from('biomarkers')
-      .delete()
-      .eq('profile_id', profileId);
+    const { error } = await supabase.from('biomarkers').delete().eq('profile_id', profileId);
 
     if (error) {
       logger.error('Failed to delete biomarkers', { error, profileId });
       throw new Error(`Failed to delete biomarkers: ${error.message}`);
+    }
+  }
+
+  /**
+   * Upsert a biomarker definition (insert or update on conflict)
+   */
+  async upsertDefinition(data: {
+    nameNormalized: string;
+    displayName: string;
+    category: string;
+    unit: string;
+    refRangeLow?: number;
+    refRangeHigh?: number;
+  }): Promise<void> {
+    const { error } = await supabase
+      .from('biomarker_definitions')
+      .upsert(
+        {
+          name_normalized: data.nameNormalized,
+          display_name: data.displayName,
+          category: data.category,
+          unit: data.unit,
+          ref_range_low: data.refRangeLow ?? null,
+          ref_range_high: data.refRangeHigh ?? null,
+        },
+        { onConflict: 'name_normalized', ignoreDuplicates: false }
+      );
+
+    if (error) {
+      logger.error('Failed to upsert biomarker definition', { error, data });
+      throw new Error(`Failed to upsert biomarker definition: ${error.message}`);
     }
   }
 
@@ -382,9 +423,7 @@ export class BiomarkerRepository {
   /**
    * Get a specific biomarker definition
    */
-  async getDefinition(
-    nameNormalized: string
-  ): Promise<BiomarkerDefinition | null> {
+  async getDefinition(nameNormalized: string): Promise<BiomarkerDefinition | null> {
     logger.debug('Getting biomarker definition', { nameNormalized });
 
     const { data, error } = await supabase

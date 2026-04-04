@@ -2,12 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { HttpError } from '@utils/httpError';
 import { logger } from '@utils/logger';
 
-export function errorMiddleware(
-  error: Error,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-) {
+export function errorMiddleware(error: Error, _req: Request, res: Response, _next: NextFunction) {
   if (error instanceof HttpError) {
     logger.warn('HTTP Error', {
       code: error.code,

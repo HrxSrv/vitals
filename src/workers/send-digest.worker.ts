@@ -8,13 +8,11 @@ import { logger } from '../utils/logger';
 /**
  * Send Digest Worker
  * Processes jobs to send monthly health digest emails
- * 
+ *
  * Job data:
  * - userId: User ID to send digest to
  */
-async function sendDigestJob(
-  job: Job<SendDigestJobData>
-): Promise<void> {
+async function sendDigestJob(job: Job<SendDigestJobData>): Promise<void> {
   const { userId } = job.data;
 
   logger.info('Processing send-digest job', {
@@ -24,9 +22,7 @@ async function sendDigestJob(
 
   try {
     // Get user email from Supabase Auth
-    const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserById(
-      userId
-    );
+    const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
 
     if (userError || !user) {
       logger.error('Failed to fetch user for digest', {
@@ -69,12 +65,8 @@ async function sendDigestJob(
 }
 
 // Create and start the worker
-export const sendDigestWorker = createWorker(
-  'send-digest',
-  sendDigestJob,
-  {
-    concurrency: 3, // Process up to 3 digest emails concurrently
-  }
-);
+export const sendDigestWorker = createWorker('send-digest', sendDigestJob, {
+  concurrency: 3, // Process up to 3 digest emails concurrently
+});
 
 logger.info('Send digest worker started');

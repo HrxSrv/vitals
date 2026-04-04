@@ -40,6 +40,9 @@ export default function DashboardPage() {
   const recentReports = reports.slice(0, 3);
   const isEmpty = !dashLoading && (!dashboard || (dashboard.summary.totalReports === 0 && reports.length === 0));
 
+  // Show processing state if reports exist but dashboard has no biomarkers yet
+  const isProcessing = reports.length > 0 && (!dashboard || dashboard.summary.biomarkerCount === 0);
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="sticky-header px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
@@ -79,20 +82,20 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {!profilesLoading && !dashLoading && isEmpty && <EmptyState profileId={profileId} />}
+        {!profilesLoading && !dashLoading && isEmpty && !isProcessing && <EmptyState profileId={profileId} />}
 
-        {!profilesLoading && !dashLoading && !isEmpty && activeProfile && dashboard && (
+        {!profilesLoading && !isEmpty && activeProfile && (dashboard || isProcessing) && (
           <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-8 lg:px-8 lg:items-start space-y-5 lg:space-y-0">
             <div className="space-y-5 lg:space-y-6">
               <div className="lg:mx-0">
                 <HealthSummaryCard
                   profile={activeProfile}
-                  summary={dashboard.summary}
+                  summary={dashboard?.summary ?? { totalReports: reports.length, biomarkerCount: 0, latestReportDate: null }}
                   alertCount={alertCount}
                 />
               </div>
 
-              {dashboard.latestBiomarkers.length > 0 && (
+              {dashboard?.latestBiomarkers?.length > 0 && (
                 <section>
                   <div className="flex items-center justify-between px-4 lg:px-0 mb-3">
                     <h2 className="font-display text-lg font-semibold text-foreground">Key Markers</h2>
@@ -101,7 +104,7 @@ export default function DashboardPage() {
                     </Link>
                   </div>
                   <div className="px-4 lg:px-0">
-                    <BiomarkerGrid biomarkers={dashboard.latestBiomarkers} />
+                    <BiomarkerGrid biomarkers={dashboard!.latestBiomarkers} />
                   </div>
                 </section>
               )}
@@ -122,7 +125,7 @@ export default function DashboardPage() {
                 </section>
               )}
 
-              {dashboard.lhm && (
+              {dashboard?.lhm && (
                 <div className="px-4 lg:hidden">
                   <button
                     onClick={() => setShowLHM(true)}
@@ -144,7 +147,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="hidden lg:flex flex-col gap-5">
-              {dashboard.lhm && (
+              {dashboard?.lhm && (
                 <button
                   onClick={() => setShowLHM(true)}
                   className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-card transition-all hover:shadow-lg"
@@ -184,7 +187,7 @@ export default function DashboardPage() {
 
       {!isEmpty && dashboard?.lhm && activeProfile && (
         <LHMViewer
-          markdown={dashboard.lhm.markdown}
+          markdown={dashboard!.lhm!.markdown}
           profileName={activeProfile.name}
           isOpen={showLHM}
           onClose={() => setShowLHM(false)}

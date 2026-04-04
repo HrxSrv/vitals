@@ -5,11 +5,7 @@ import { logger } from '../utils/logger';
  * Request logging middleware
  * Logs all incoming HTTP requests with method, path, and response time
  */
-export function requestLoggerMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function requestLoggerMiddleware(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
 
   // Log request

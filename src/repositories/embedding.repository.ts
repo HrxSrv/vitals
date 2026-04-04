@@ -242,9 +242,7 @@ export class EmbeddingRepository {
       userId: row.user_id,
       profileId: row.profile_id,
       chunkText: row.chunk_text,
-      embedding: typeof row.embedding === 'string' 
-        ? JSON.parse(row.embedding) 
-        : row.embedding,
+      embedding: typeof row.embedding === 'string' ? JSON.parse(row.embedding) : row.embedding,
       createdAt: new Date(row.created_at),
     };
   }

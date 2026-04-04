@@ -24,16 +24,13 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
 
 /**
  * Execute a function with exponential backoff retry logic
- * 
+ *
  * @param fn - The async function to execute
  * @param options - Retry configuration options
  * @returns Promise resolving to the function result
  * @throws The last error if all retry attempts fail
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const config = { ...DEFAULT_RETRY_OPTIONS, ...options };
   let lastError: any;
 
@@ -74,7 +71,7 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Create a retry function with predefined options
- * 
+ *
  * @param options - Default retry options
  * @returns A retry function with the specified options
  */
@@ -142,7 +139,7 @@ export const retryStrategies = {
 
 /**
  * Retry with jitter to avoid thundering herd problem
- * 
+ *
  * @param fn - The async function to execute
  * @param options - Retry configuration options
  * @returns Promise resolving to the function result
@@ -157,11 +154,11 @@ export async function withRetryAndJitter<T>(
       // Add random jitter (0-50% of delay)
       const jitter = Math.random() * delayMs * 0.5;
       const totalDelay = delayMs + jitter;
-      
+
       console.log(
         `Retry attempt ${attempt} after ${totalDelay.toFixed(0)}ms (base: ${delayMs}ms, jitter: ${jitter.toFixed(0)}ms)`
       );
-      
+
       if (options.onRetry) {
         options.onRetry(error, attempt, totalDelay);
       }
@@ -190,7 +187,7 @@ export interface CircuitBreakerOptions {
 /**
  * Create a circuit breaker wrapper for a function
  * Prevents cascading failures by stopping calls after threshold
- * 
+ *
  * @param fn - The async function to wrap
  * @param options - Circuit breaker configuration
  * @returns Wrapped function with circuit breaker
@@ -199,10 +196,7 @@ export function withCircuitBreaker<T extends (...args: any[]) => Promise<any>>(
   fn: T,
   options: CircuitBreakerOptions = {}
 ): T {
-  const {
-    failureThreshold = 5,
-    resetTimeoutMs = 60000,
-  } = options;
+  const { failureThreshold = 5, resetTimeoutMs = 60000 } = options;
 
   const state: CircuitBreakerState = {
     failures: 0,
@@ -214,7 +208,7 @@ export function withCircuitBreaker<T extends (...args: any[]) => Promise<any>>(
     // Check if circuit is open
     if (state.state === 'open') {
       const timeSinceLastFailure = Date.now() - state.lastFailureTime;
-      
+
       if (timeSinceLastFailure >= resetTimeoutMs) {
         // Try half-open state
         state.state = 'half-open';
@@ -226,14 +220,14 @@ export function withCircuitBreaker<T extends (...args: any[]) => Promise<any>>(
 
     try {
       const result = await fn(...args);
-      
+
       // Success - reset circuit breaker
       if (state.state === 'half-open') {
         state.state = 'closed';
         state.failures = 0;
         console.log('Circuit breaker closed - service recovered');
       }
-      
+
       return result;
     } catch (error) {
       state.failures++;

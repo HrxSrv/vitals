@@ -15,11 +15,11 @@ import { validateLHM, needsCompression as checkNeedsCompression } from '../utils
  * LHM Service
  * Handles Living Health Markdown document operations
  * Manages LHM initialization, merging, and validation
- * 
+ *
  * ## LHM Merge Logic Overview
- * 
+ *
  * The LHM merge process follows these steps:
- * 
+ *
  * 1. **First Report (Initial Population)**
  *    - Fills in the "Current Health Snapshot" with all biomarkers
  *    - Categorizes each biomarker as 🔴 Needs Attention, 🟡 Borderline, or 🟢 Normal
@@ -29,7 +29,7 @@ import { validateLHM, needsCompression as checkNeedsCompression } from '../utils
  *    - Infers "Known Conditions" from biomarker values
  *    - Updates the "Report Log" with the first report
  *    - Updates metadata (last updated, report count, etc.)
- * 
+ *
  * 2. **Subsequent Reports (Merge)**
  *    - Updates "Current Health Snapshot" with latest values
  *    - Recategorizes biomarkers based on new values
@@ -43,32 +43,32 @@ import { validateLHM, needsCompression as checkNeedsCompression } from '../utils
  *    - Highlights significant changes from previous report
  *    - Updates "Report Log" with new report
  *    - Updates metadata
- * 
+ *
  * 3. **Validation**
  *    - Ensures all required sections are present
  *    - Verifies new biomarker data appears in the document
  *    - Checks that document hasn't shrunk significantly (data loss check)
  *    - Validates token count is within reasonable limits
- * 
+ *
  * 4. **Compression (when needed)**
  *    - Triggered when LHM exceeds 4000 tokens
  *    - Keeps current snapshot and recent data in full
  *    - Summarizes older historical entries
  *    - Maintains exact markdown structure
- * 
+ *
  * ## Implementation Details
- * 
+ *
  * The merge logic is primarily implemented through LLM prompts:
  * - `LHM_FIRST_REPORT_PROMPT`: Used for initial population
  * - `LHM_MERGE_PROMPT`: Used for subsequent merges
- * 
+ *
  * These prompts instruct the LLM to:
  * - Maintain exact markdown structure
  * - Never delete historical data
  * - Update specific sections based on new data
  * - Generate human-readable observations
  * - Apply proper status indicators and trends
- * 
+ *
  * The service enriches biomarkers with reference ranges from the database
  * before passing them to the LLM, ensuring accurate status categorization.
  */
@@ -76,7 +76,7 @@ export class LHMService {
   /**
    * Update LHM with new biomarker data from a report
    * This is the main merge operation called after report processing
-   * 
+   *
    * @param profileId - Profile ID
    * @param newBiomarkers - Newly extracted biomarkers from report
    * @param reportDate - Date of the report
@@ -97,7 +97,7 @@ export class LHMService {
 
       // Get current LHM — auto-initialize skeleton if missing
       let currentLHM = await lhmRepository.findByProfileId(profileId);
-      
+
       if (!currentLHM) {
         logger.warn('LHM missing for profile during update, initializing skeleton', { profileId });
         // Fetch profile to build skeleton
@@ -116,8 +116,8 @@ export class LHMService {
       const biomarkersWithDefinitions = await this.enrichBiomarkersWithDefinitions(newBiomarkers);
 
       // Determine if this is the first report or a merge
-      const isFirstReport = currentLHM.version === 1 && 
-        currentLHM.markdown.includes('No reports uploaded yet');
+      const isFirstReport =
+        currentLHM.version === 1 && currentLHM.markdown.includes('No reports uploaded yet');
 
       // Generate updated LHM using LLM
       const updatedMarkdown = await this.generateUpdatedLHM(
@@ -129,18 +129,18 @@ export class LHMService {
       );
 
       // Validate the updated LHM
-      const isValid = this.validateLHM(
-        updatedMarkdown,
-        currentLHM.markdown,
-        newBiomarkers
-      );
+      const validationResult = this.validateLHMResult(updatedMarkdown, currentLHM.markdown, newBiomarkers);
+      const isValid = validationResult.isValid;
 
       if (!isValid) {
-        // Log the generated markdown for debugging
         logger.error('Generated LHM that failed validation:', {
           profileId,
-          markdownPreview: updatedMarkdown.substring(0, 2000),
+          failedChecks: Object.entries(validationResult.checks)
+            .filter(([, v]) => !v)
+            .map(([k]) => k),
+          errors: validationResult.errors,
           markdownLength: updatedMarkdown.length,
+          markdownTail: updatedMarkdown.slice(-300), // show the end to detect truncation
         });
         throw new HttpError(500, 'Generated LHM failed validation', 'VALIDATION_ERROR');
       }
@@ -202,7 +202,8 @@ export class LHMService {
     // Generate updated markdown using LLM
     const systemMessage = {
       role: 'system' as const,
-      content: 'You are a health data analyst maintaining Living Health Markdown documents. Follow instructions precisely and maintain exact markdown structure.',
+      content:
+        'You are a health data analyst maintaining Living Health Markdown documents. Follow instructions precisely and maintain exact markdown structure.',
     };
 
     const userMessage = {
@@ -210,13 +211,10 @@ export class LHMService {
       content: prompt,
     };
 
-    const updatedMarkdown = await getChatProvider().complete(
-      [systemMessage, userMessage],
-      {
-        temperature: 0.3, // Low temperature for consistent formatting
-        maxTokens: 6000, // Allow for large LHM documents
-      }
-    );
+    const updatedMarkdown = await getChatProvider().complete([systemMessage, userMessage], {
+      temperature: 0.3, // Low temperature for consistent formatting
+      maxTokens: 12000, // LHM documents can be large — give enough room
+    });
 
     // Strip markdown code blocks if present (LLM sometimes wraps response in ```markdown```)
     let cleanedMarkdown = updatedMarkdown.trim();
@@ -238,7 +236,7 @@ export class LHMService {
   ): string {
     const formattedBiomarkers = biomarkers.map((biomarker) => {
       const definition = biomarker.definition;
-      
+
       return {
         name: biomarker.name,
         nameNormalized: biomarker.nameNormalized,
@@ -248,9 +246,10 @@ export class LHMService {
         category: biomarker.category || definition?.category || 'other',
         refRangeLow: definition?.refRangeLow,
         refRangeHigh: definition?.refRangeHigh,
-        refRange: definition?.refRangeLow && definition?.refRangeHigh
-          ? `${definition.refRangeLow}-${definition.refRangeHigh}`
-          : 'Not available',
+        refRange:
+          definition?.refRangeLow && definition?.refRangeHigh
+            ? `${definition.refRangeLow}-${definition.refRangeHigh}`
+            : 'Not available',
       };
     });
 
@@ -270,9 +269,7 @@ export class LHMService {
   ): Promise<BiomarkerWithDefinition[]> {
     const enriched = await Promise.all(
       biomarkers.map(async (biomarker) => {
-        const definition = await biomarkerRepository.getDefinition(
-          biomarker.nameNormalized
-        );
+        const definition = await biomarkerRepository.getDefinition(biomarker.nameNormalized);
         return {
           ...biomarker,
           definition: definition || undefined,
@@ -287,24 +284,23 @@ export class LHMService {
    * Validate LHM structure and content using the validator utility
    * Ensures all required sections are present and no data loss occurred
    */
-  private validateLHM(
+  private validateLHMResult(
     newMarkdown: string,
     oldMarkdown: string,
     newBiomarkers: Biomarker[]
-  ): boolean {
-    // Check if this is the first report (skeleton LHM)
-    const isFirstReport = oldMarkdown.includes('No reports uploaded yet') || 
-                         oldMarkdown.length < 200;
-    
+  ) {
+    const isFirstReport =
+      oldMarkdown.includes('No reports uploaded yet') || oldMarkdown.length < 200;
+
     const result = validateLHM(
       newMarkdown,
       oldMarkdown,
       newBiomarkers,
       (text) => getChatProvider().estimateTokens(text),
       {
-        maxTokens: 8000,
-        minShrinkageRatio: isFirstReport ? 0.1 : 0.7, // More lenient for first report
-        checkHistoricalDates: !isFirstReport, // Skip historical date check for first report
+        maxTokens: 12000,
+        minShrinkageRatio: isFirstReport ? 0.1 : 0.7,
+        checkHistoricalDates: !isFirstReport,
         strictMode: false,
       }
     );
@@ -316,12 +312,10 @@ export class LHMService {
         checks: result.checks,
       });
     } else if (result.warnings.length > 0) {
-      logger.warn('LHM validation passed with warnings', {
-        warnings: result.warnings,
-      });
+      logger.warn('LHM validation passed with warnings', { warnings: result.warnings });
     }
 
-    return result.isValid;
+    return result;
   }
 
   /**
@@ -329,7 +323,7 @@ export class LHMService {
    */
   async getLHM(profileId: string): Promise<LHMDocument> {
     const lhm = await lhmRepository.findByProfileId(profileId);
-    
+
     if (!lhm) {
       throw new HttpError(404, 'LHM not found for profile', 'NOT_FOUND');
     }
@@ -356,8 +350,7 @@ export class LHMService {
       age = String(a);
     }
 
-    const markdown = LHM_SKELETON_TEMPLATE
-      .replace(/{{name}}/g, profile.name)
+    const markdown = LHM_SKELETON_TEMPLATE.replace(/{{name}}/g, profile.name)
       .replace(/{{age}}/g, age)
       .replace(/{{gender}}/g, profile.gender || 'N/A')
       .replace(/{{lastUpdated}}/g, new Date().toISOString().split('T')[0]);
@@ -387,7 +380,7 @@ export class LHMService {
    */
   async getLHMVersion(profileId: string, version: number) {
     const history = await lhmRepository.getVersion(profileId, version);
-    
+
     if (!history) {
       throw new HttpError(404, 'LHM version not found', 'NOT_FOUND');
     }
@@ -443,7 +436,8 @@ Return ONLY the compressed markdown document, no explanations.`;
 
     const systemMessage = {
       role: 'system' as const,
-      content: 'You are a health data analyst maintaining Living Health Markdown documents. Follow compression instructions precisely.',
+      content:
+        'You are a health data analyst maintaining Living Health Markdown documents. Follow compression instructions precisely.',
     };
 
     const userMessage = {
@@ -451,13 +445,10 @@ Return ONLY the compressed markdown document, no explanations.`;
       content: compressionPrompt,
     };
 
-    const compressedMarkdown = await getChatProvider().complete(
-      [systemMessage, userMessage],
-      {
-        temperature: 0.2,
-        maxTokens: 5000,
-      }
-    );
+    const compressedMarkdown = await getChatProvider().complete([systemMessage, userMessage], {
+      temperature: 0.2,
+      maxTokens: 5000,
+    });
 
     // Validate compressed version
     const result = validateLHM(
@@ -484,7 +475,7 @@ Return ONLY the compressed markdown document, no explanations.`;
 
     // Update LHM with compressed version
     const tokensApprox = getChatProvider().estimateTokens(compressedMarkdown);
-    
+
     const updatedLHM = await lhmRepository.update(profileId, {
       markdown: compressedMarkdown.trim(),
       tokensApprox,

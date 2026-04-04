@@ -70,7 +70,10 @@ export class OpenAIChatService implements AIChatProvider {
       : `${prompt}\n\nReturn ONLY valid JSON, no additional text.`;
 
     const response = await this.complete(
-      [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text },
+      ],
       { temperature: 0.1, maxTokens: 4000 }
     );
 

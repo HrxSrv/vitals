@@ -4,7 +4,7 @@ import { notificationService } from '../../services/notification.service';
 /**
  * PATCH /api/settings/notifications
  * Update notification preferences for the authenticated user
- * 
+ *
  * Request body:
  * {
  *   emailDigestEnabled?: boolean;

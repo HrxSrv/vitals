@@ -23,10 +23,7 @@ export class MistralOCRService {
    * @param filename - Original filename for logging
    * @returns Extracted markdown text
    */
-  async extractTextFromPDF(
-    documentUrl: string,
-    filename: string
-  ): Promise<string> {
+  async extractTextFromPDF(documentUrl: string, filename: string): Promise<string> {
     try {
       logger.info('Starting OCR extraction', { filename, documentUrl });
 
@@ -44,12 +41,9 @@ export class MistralOCRService {
 
           // Extract text from all pages
           const pages = ocrResponse.pages || [];
-          
+
           if (pages.length === 0) {
-            throw new ExternalServiceError(
-              'Mistral OCR',
-              'No pages extracted from PDF'
-            );
+            throw new ExternalServiceError('Mistral OCR', 'No pages extracted from PDF');
           }
 
           // Combine all page texts with page separators
@@ -61,10 +55,7 @@ export class MistralOCRService {
             .join('\n\n---\n\n');
 
           if (!extractedText || extractedText.trim().length === 0) {
-            throw new ExternalServiceError(
-              'Mistral OCR',
-              'No text extracted from PDF'
-            );
+            throw new ExternalServiceError('Mistral OCR', 'No text extracted from PDF');
           }
 
           return extractedText;

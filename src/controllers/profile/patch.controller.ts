@@ -14,11 +14,7 @@ export async function updateProfile(
     const userId = req.user!.id;
     const profileId = req.params.id;
 
-    const profile = await profileService.updateProfile(
-      userId,
-      profileId,
-      req.body
-    );
+    const profile = await profileService.updateProfile(userId, profileId, req.body);
 
     res.json({ profile });
   } catch (error) {

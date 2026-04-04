@@ -11,12 +11,12 @@ export class AuthService {
   async getSession(token: string): Promise<User> {
     try {
       // Verify token with Supabase Auth
-      const supabase = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_ANON_KEY!
-      );
+      const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
 
-      const { data: { user: authUser }, error } = await supabase.auth.getUser(token);
+      const {
+        data: { user: authUser },
+        error,
+      } = await supabase.auth.getUser(token);
 
       if (error || !authUser) {
         logger.warn('Invalid token in getSession', { error: error?.message });

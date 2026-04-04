@@ -127,7 +127,7 @@ async function updateBiomarkerDefinitions() {
 
     // Step 2: Insert new biomarkers
     console.log('\n2. Adding missing biomarkers...');
-    
+
     for (const biomarker of newBiomarkers) {
       // Check if it already exists
       const { data: existing } = await supabaseAdmin

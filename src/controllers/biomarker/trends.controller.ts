@@ -6,7 +6,11 @@ import { biomarkerRepository } from '../../repositories/biomarker.repository';
  * GET /api/biomarkers/trends?profileId=xxx
  * Get biomarker trends for a profile (only biomarkers with 2+ data points)
  */
-export async function getBiomarkerTrends(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getBiomarkerTrends(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   try {
     const { profileId } = req.query;
 
@@ -18,8 +22,20 @@ export async function getBiomarkerTrends(req: Request, res: Response, next: Next
     // Get all biomarkers with definitions
     const biomarkers = await biomarkerRepository.findByProfileWithDefinitions(profileId);
 
+    // Deduplicate: keep only one entry per (nameNormalized, reportId).
+    // A single CBC report can produce multiple sub-measurements that normalize
+    // to the same name (e.g. RBC by impedance + RBC by histogram both → rbc),
+    // which would create fake "multiple readings" from a single upload.
+    const seen = new Set<string>();
+    const deduplicated = biomarkers.filter((b) => {
+      const key = `${b.nameNormalized}::${b.reportId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     // Group by nameNormalized and filter those with 2+ readings
-    const biomarkerGroups = biomarkers.reduce<Record<string, typeof biomarkers>>((acc, b) => {
+    const biomarkerGroups = deduplicated.reduce<Record<string, typeof deduplicated>>((acc, b) => {
       if (!acc[b.nameNormalized]) acc[b.nameNormalized] = [];
       acc[b.nameNormalized].push(b);
       return acc;
@@ -46,7 +62,7 @@ export async function getBiomarkerTrends(req: Request, res: Response, next: Next
           unit: definition?.unit || latest.unit,
           refRangeLow: definition?.refRangeLow,
           refRangeHigh: definition?.refRangeHigh,
-          history: sorted.map(b => ({
+          history: sorted.map((b) => ({
             date: b.reportDate ? b.reportDate.toISOString() : new Date().toISOString(),
             value: b.value,
             status: biomarkerService.calculateStatus(b.value, b.definition || undefined),

@@ -3,6 +3,12 @@ import { createWorker, ProcessReportJobData } from '../lib/queue';
 import { reportRepository } from '../repositories/report.repository';
 import { storageService } from '../services/storage.service';
 import { mistralOCRService } from '../services/mistral-ocr.service';
+import { openAIOCRService } from '../services/openai-ocr.service';
+
+const ocrService =
+  (process.env.AI_PROVIDER ?? 'mistral').toLowerCase() === 'openai'
+    ? openAIOCRService
+    : mistralOCRService;
 import { biomarkerService } from '../services/biomarker.service';
 import { queueService } from '../services/queue.service';
 import { dashboardService } from '../services/dashboard.service';
@@ -10,7 +16,7 @@ import { logger } from '../utils/logger';
 
 /**
  * Process Report Worker
- * 
+ *
  * Orchestrates the complete report processing pipeline:
  * 1. Fetch report metadata from database
  * 2. Create signed URL for temporary access
@@ -46,11 +52,8 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
     logger.info('Signed URL created for OCR', { reportId });
     await job.updateProgress(30);
 
-    // Step 4: Extract text using Mistral OCR (pass signed URL)
-    const ocrMarkdown = await mistralOCRService.extractTextFromPDF(
-      signedUrl,
-      `report-${reportId}.pdf`
-    );
+    // Step 4: Extract text using OCR (Mistral or OpenAI vision based on AI_PROVIDER)
+    const ocrMarkdown = await ocrService.extractTextFromPDF(signedUrl, `report-${reportId}.pdf`);
     logger.info('OCR extraction completed', {
       reportId,
       textLength: ocrMarkdown.length,
@@ -105,7 +108,6 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
     dashboardService.invalidateCache(profileId);
 
     await job.updateProgress(100);
-
   } catch (error: any) {
     logger.error('Report processing failed', {
       reportId,
@@ -129,12 +131,8 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
 }
 
 // Create and start the worker
-export const processReportWorker = createWorker(
-  'process-report',
-  processReportJob,
-  {
-    concurrency: 3, // Process up to 3 reports concurrently
-  }
-);
+export const processReportWorker = createWorker('process-report', processReportJob, {
+  concurrency: 3, // Process up to 3 reports concurrently
+});
 
 logger.info('Process report worker started');

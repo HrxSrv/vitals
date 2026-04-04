@@ -17,4 +17,3 @@ export async function deleteReport(req: Request, res: Response, next: NextFuncti
     next(error);
   }
 }
-

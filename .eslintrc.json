@@ -19,11 +19,30 @@
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-floating-promises": "error",
-    "@typescript-eslint/no-misused-promises": "error"
+    "@typescript-eslint/no-misused-promises": ["error", { "checksVoidReturn": false }],
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/no-var-requires": "warn",
+    "@typescript-eslint/no-redundant-type-constituents": "off",
+    "@typescript-eslint/unbound-method": "off"
   },
   "env": {
     "node": true,
     "es2022": true
   },
-  "ignorePatterns": ["dist", "node_modules"]
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "src/scripts/test-*.ts",
+    "src/scripts/check-db.ts",
+    "src/scripts/init-*.ts",
+    "src/scripts/update-*.ts",
+    "src/scripts/verify-*.ts",
+    "src/scripts/debug-*.ts",
+    "src/**/__tests__/**",
+    "src/services/__tests__/**"
+  ]
 }

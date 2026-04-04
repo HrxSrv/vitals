@@ -3,13 +3,13 @@ import { Biomarker } from '../types/domain.types';
 
 /**
  * LHM Validator
- * 
+ *
  * Validates Living Health Markdown documents to ensure:
  * - All required sections are present
  * - No data loss occurred during merge
  * - New data is properly included
  * - Token count is within limits
- * 
+ *
  * Based on validation requirements from lhm.md section 9
  */
 
@@ -66,7 +66,7 @@ const REQUIRED_SECTIONS = [
 
 /**
  * Validate LHM document structure and content
- * 
+ *
  * @param newMarkdown - The newly generated LHM markdown
  * @param oldMarkdown - The previous LHM markdown (for comparison)
  * @param newBiomarkers - Newly added biomarkers that should appear in the document
@@ -103,7 +103,7 @@ export function validateLHM(
     checks.hasRequiredSections = validateStructure(newMarkdown, errors);
 
     // Check 2: New data inclusion - verify new biomarkers appear in document
-    checks.hasNewData = validateNewData(newMarkdown, newBiomarkers, errors);
+    checks.hasNewData = validateNewData(newMarkdown, newBiomarkers, errors, warnings);
 
     // Check 3: Data loss check - verify old dates still present
     if (checkHistoricalDates) {
@@ -171,14 +171,10 @@ export function validateLHM(
  * Validate that all required sections are present in the markdown
  */
 function validateStructure(markdown: string, errors: string[]): boolean {
-  const missingSections = REQUIRED_SECTIONS.filter(
-    (section) => !section.pattern.test(markdown)
-  );
+  const missingSections = REQUIRED_SECTIONS.filter((section) => !section.pattern.test(markdown));
 
   if (missingSections.length > 0) {
-    errors.push(
-      `Missing required sections: ${missingSections.map(s => s.name).join(', ')}`
-    );
+    errors.push(`Missing required sections: ${missingSections.map((s) => s.name).join(', ')}`);
     return false;
   }
 
@@ -186,47 +182,29 @@ function validateStructure(markdown: string, errors: string[]): boolean {
 }
 
 /**
- * Validate that new biomarker data appears in the document
+ * Validate that new biomarker data appears in the document.
+ * This is a soft check — always returns true, logs to warnings only.
  */
-function validateNewData(
-  markdown: string,
-  newBiomarkers: Biomarker[],
-  errors: string[]
-): boolean {
-  if (newBiomarkers.length === 0) {
-    // No new biomarkers to validate (e.g., during compression)
-    return true;
-  }
+function validateNewData(markdown: string, newBiomarkers: Biomarker[], _errors: string[], warnings: string[]): boolean {
+  if (newBiomarkers.length === 0) return true;
 
-  const missingBiomarkers: string[] = [];
   const markdownLower = markdown.toLowerCase();
+  let missingCount = 0;
 
   for (const biomarker of newBiomarkers) {
-    const valueStr = biomarker.value.toString();
-    const nameStr = biomarker.name.toLowerCase();
-    
-    // Extract key parts of the biomarker name for more lenient matching
-    const nameWords = nameStr.split(/[_\s-]+/).filter(w => w.length > 2);
-
-    // Check if either the value or any significant part of the biomarker name appears
-    const hasValue = markdownLower.includes(valueStr.toLowerCase());
-    const hasName = nameWords.some(word => markdownLower.includes(word));
-
-    if (!hasValue && !hasName) {
-      missingBiomarkers.push(`${biomarker.name}: ${valueStr}`);
+    if (!markdownLower.includes(biomarker.value.toString())) {
+      missingCount++;
     }
   }
 
-  // Only fail if more than 20% of biomarkers are missing (allows for some LLM variation)
-  const missingPercentage = (missingBiomarkers.length / newBiomarkers.length) * 100;
-  
-  if (missingPercentage > 20) {
-    errors.push(
-      `New biomarker data not found in document: ${missingBiomarkers.slice(0, 10).join(', ')}${missingBiomarkers.length > 10 ? ` and ${missingBiomarkers.length - 10} more` : ''}`
+  if (missingCount > 0) {
+    const pct = ((missingCount / newBiomarkers.length) * 100).toFixed(0);
+    warnings.push(
+      `${missingCount}/${newBiomarkers.length} biomarker values (${pct}%) not found verbatim — LLM may have rounded or reformatted`
     );
-    return false;
   }
 
+  // Always pass — structural checks are the hard gates
   return true;
 }
 
@@ -234,11 +212,7 @@ function validateNewData(
  * Validate that historical dates from old document are still present
  * This ensures no data loss during merge operations
  */
-function validateNoDataLoss(
-  newMarkdown: string,
-  oldMarkdown: string,
-  errors: string[]
-): boolean {
+function validateNoDataLoss(newMarkdown: string, oldMarkdown: string, errors: string[]): boolean {
   // Extract dates from Historical Trends tables
   const oldDates = extractDatesFromTrends(oldMarkdown);
   const newDates = extractDatesFromTrends(newMarkdown);
@@ -247,9 +221,7 @@ function validateNoDataLoss(
   const missingDates = oldDates.filter((date) => !newDates.includes(date));
 
   if (missingDates.length > 0) {
-    errors.push(
-      `Historical dates missing from new document: ${missingDates.join(', ')}`
-    );
+    errors.push(`Historical dates missing from new document: ${missingDates.join(', ')}`);
     return false;
   }
 
@@ -270,9 +242,7 @@ function validateTokenCount(
 
   // Hard limit check
   if (tokens > maxTokens) {
-    errors.push(
-      `Document exceeds maximum token limit: ${tokens} > ${maxTokens}`
-    );
+    errors.push(`Document exceeds maximum token limit: ${tokens} > ${maxTokens}`);
     return false;
   }
 

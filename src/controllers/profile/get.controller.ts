@@ -5,11 +5,7 @@ import profileService from '@services/profile.service';
  * GET /api/profiles
  * Get all profiles for the authenticated user
  */
-export async function getProfiles(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getProfiles(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
     const profiles = await profileService.getProfiles(userId);
@@ -24,11 +20,7 @@ export async function getProfiles(
  * GET /api/profiles/:id
  * Get a specific profile by ID
  */
-export async function getProfile(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
     const profileId = req.params.id;

@@ -1,14 +1,19 @@
 import { getChatProvider } from './ai-provider';
 import { biomarkerRepository } from '../repositories/biomarker.repository';
 import { biomarkerNormalizer } from '../utils/biomarker-normalizer';
+import { alignUnits, detectAndFixScaleMismatch } from '../utils/unit-normalizer';
 import { logger } from '../utils/logger';
 import { Biomarker, BiomarkerWithDefinition } from '../types/domain.types';
 
 export interface ExtractedBiomarker {
   name: string;
+  nameNormalized: string;
   value: number;
   unit: string;
   category?: string;
+  refRangeLow?: number;
+  refRangeHigh?: number;
+  refRangeUnit?: string;
 }
 
 export interface BiomarkerExtractionResult {
@@ -22,37 +27,57 @@ export class BiomarkerService {
    * @param ocrMarkdown - Raw OCR markdown output from report
    * @returns Extracted biomarkers and report date
    */
-  async extractFromOCR(
-    ocrMarkdown: string
-  ): Promise<BiomarkerExtractionResult> {
+  async extractFromOCR(ocrMarkdown: string): Promise<BiomarkerExtractionResult> {
     logger.info('Extracting biomarkers from OCR markdown');
 
     const prompt = `You are a medical lab report analyzer. Extract all biomarker values from the following lab report text.
 
 Instructions:
-1. Extract ONLY biomarker names, values, and units
+1. Extract ONLY biomarker names, values, units, and reference ranges
 2. Include the report date if present
 3. Return data as JSON with this exact structure:
 {
   "reportDate": "YYYY-MM-DD" or null,
   "biomarkers": [
     {
-      "name": "biomarker name as written in report",
+      "name": "biomarker name exactly as written in the report",
+      "nameNormalized": "canonical snake_case identifier (see rules below)",
       "value": numeric value only,
       "unit": "unit of measurement",
-      "category": "diabetes|kidney|liver|lipid|thyroid|blood_count|vitamins|hormones|other" (optional, best guess)
+      "category": "diabetes|kidney|liver|lipid|thyroid|blood_count|vitamins|hormones|other",
+      "refRangeLow": numeric lower bound of reference range or null,
+      "refRangeHigh": numeric upper bound of reference range or null,
+      "refRangeUnit": "unit of the reference range exactly as written, or null if same as value unit"
     }
   ]
 }
 
 Rules:
 - Extract ALL biomarkers found in the report
-- Use exact biomarker names as they appear in the report
-- Convert values to numbers (remove commas, handle ranges by taking the actual value)
-- Include units exactly as shown (mg/dL, g/dL, %, etc.)
-- If a biomarker has multiple values, create separate entries
-- Ignore reference ranges - only extract actual patient values
+- "name" must preserve the full biomarker name exactly as written in the report
+- "nameNormalized" must be a consistent snake_case canonical identifier. The SAME test must ALWAYS get the same nameNormalized regardless of how the lab writes it (e.g., "SGPT", "ALT", "Alanine Aminotransferase" → all get nameNormalized "alt")
+- DIFFERENT tests must get DIFFERENT nameNormalized values:
+  - Different sample types are different tests: "Serum Albumin" → "albumin", "Urine Albumin" → "urine_albumin"
+  - Different subtypes are different tests: "Total Bilirubin" → "total_bilirubin", "Direct Bilirubin" → "direct_bilirubin", "Indirect Bilirubin" → "indirect_bilirubin"
+- SKIP qualitative/non-numeric results entirely (e.g., "Present", "Absent", "Positive", "Negative", "+", "++", "Trace") — do NOT convert them to numbers
+- Convert numeric values to numbers (remove commas, handle ranges by taking the actual patient value)
+- "unit" must be the unit of the patient value exactly as shown (mg/dL, g/dL, %, /μL, etc.)
+- Extract reference ranges as raw numbers exactly as printed — do NOT convert or scale them
+- "refRangeUnit" must be the unit shown next to the reference range, exactly as written (e.g., "thousand/μL", "×10³/L", "lakhs/μL"). Set to null if the reference range unit is the same as the value unit
+- If a biomarker appears multiple times with different measurement methods, keep only the first numeric value
 - Return ONLY valid JSON, no additional text
+
+Preferred canonical names (use these when applicable, invent new snake_case names for tests not listed):
+fasting_blood_sugar, hba1c, creatinine, blood_urea_nitrogen, egfr, uric_acid,
+alt, ast, alkaline_phosphatase, total_bilirubin, direct_bilirubin, indirect_bilirubin,
+albumin, urine_albumin, total_protein, ggt,
+total_cholesterol, ldl_cholesterol, hdl_cholesterol, vldl_cholesterol, triglycerides,
+tsh, t3, t4, free_t3, free_t4,
+hemoglobin, hematocrit, white_blood_cells, rbc, platelets, mcv, mch, mchc,
+rdw, rdw_cv, rdw_sd, mpv,
+esr, crp,
+sodium, potassium, chloride, calcium, magnesium,
+vitamin_d, vitamin_b12, folate
 
 Lab Report Text:
 ${ocrMarkdown}`;
@@ -64,7 +89,7 @@ ${ocrMarkdown}`;
       }>(
         prompt,
         ocrMarkdown,
-        '{ reportDate?: string, biomarkers: Array<{ name: string, value: number, unit: string, category?: string }> }'
+        '{ reportDate?: string, biomarkers: Array<{ name: string, nameNormalized: string, value: number, unit: string, category?: string, refRangeLow?: number, refRangeHigh?: number, refRangeUnit?: string }> }'
       );
 
       logger.info('Biomarker extraction successful', {
@@ -104,45 +129,99 @@ ${ocrMarkdown}`;
       profileId,
     });
 
-    // Get all known biomarker definitions for LLM fallback
-    const definitions = await biomarkerRepository.getAllDefinitions();
-    const knownBiomarkers = definitions.map((d) => d.nameNormalized);
+    // Use LLM-provided nameNormalized when available; fall back to normalizer for safety
+    const normalizedBiomarkers = extractedBiomarkers.map((biomarker) => {
+      const nameNormalized = biomarker.nameNormalized
+        ? biomarkerNormalizer.sanitize(biomarker.nameNormalized)
+        : biomarkerNormalizer.normalize(biomarker.name);
+      const category = biomarker.category;
 
-    // Normalize biomarker names
-    const normalizedBiomarkers = await Promise.all(
-      extractedBiomarkers.map(async (biomarker) => {
-        const nameNormalized = await biomarkerNormalizer.normalize(
-          biomarker.name,
-          knownBiomarkers
-        );
+      // Layer 1: Align ref range units to value units using the LLM-provided refRangeUnit
+      let { refRangeLow, refRangeHigh } = alignUnits(
+        biomarker.value,
+        biomarker.unit,
+        biomarker.refRangeLow,
+        biomarker.refRangeHigh,
+        biomarker.refRangeUnit,
+      );
 
-        // Try to get definition for category if not provided
-        let category = biomarker.category;
-        if (!category) {
-          const definition = await biomarkerRepository.getDefinition(
-            nameNormalized
-          );
-          category = definition?.category;
+      // Layer 2: Safety net — if value is still wildly outside ref range,
+      // try common multipliers to auto-correct
+      const safetyCheck = detectAndFixScaleMismatch(biomarker.value, refRangeLow, refRangeHigh);
+      if (safetyCheck.corrected) {
+        refRangeLow = safetyCheck.refRangeLow;
+        refRangeHigh = safetyCheck.refRangeHigh;
+      }
+
+      return {
+        reportId,
+        userId,
+        profileId,
+        name: biomarker.name,
+        nameNormalized,
+        category,
+        value: biomarker.value,
+        unit: biomarker.unit,
+        reportDate,
+        refRangeLow,
+        refRangeHigh,
+      };
+    });
+
+    // Deduplicate within this report — keep first occurrence of each nameNormalized.
+    // A single CBC can have multiple sub-measurements (e.g. RBC by impedance + laser)
+    // that normalize to the same canonical name; only store one per report.
+    const seenNames = new Set<string>();
+    const uniqueBiomarkers = normalizedBiomarkers.filter((b) => {
+      if (seenNames.has(b.nameNormalized)) return false;
+      seenNames.add(b.nameNormalized);
+      return true;
+    });
+
+    // Auto-upsert definitions for any biomarker not already in the definitions table.
+    // This means we never need a predefined list — definitions grow from real report data.
+    await Promise.all(
+      uniqueBiomarkers.map(async (b) => {
+        const existing = await biomarkerRepository.getDefinition(b.nameNormalized);
+        if (!existing) {
+          // Build a display name from the raw name (title-case, clean up underscores)
+          const displayName = b.name
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+
+          await biomarkerRepository.upsertDefinition({
+            nameNormalized: b.nameNormalized,
+            displayName,
+            category: b.category ?? 'other',
+            unit: b.unit,
+            refRangeLow: b.refRangeLow,
+            refRangeHigh: b.refRangeHigh,
+          });
+
+          logger.info('Auto-created biomarker definition', {
+            nameNormalized: b.nameNormalized,
+            displayName,
+          });
+        } else if (
+          existing.refRangeLow === undefined &&
+          existing.refRangeHigh === undefined &&
+          (b.refRangeLow !== undefined || b.refRangeHigh !== undefined)
+        ) {
+          // Backfill reference ranges if we now have them but didn't before
+          await biomarkerRepository.upsertDefinition({
+            nameNormalized: b.nameNormalized,
+            displayName: existing.displayName,
+            category: existing.category ?? b.category ?? 'other',
+            unit: existing.unit ?? b.unit,
+            refRangeLow: b.refRangeLow,
+            refRangeHigh: b.refRangeHigh,
+          });
         }
-
-        return {
-          reportId,
-          userId,
-          profileId,
-          name: biomarker.name,
-          nameNormalized,
-          category,
-          value: biomarker.value,
-          unit: biomarker.unit,
-          reportDate,
-        };
       })
     );
 
     // Store in database
-    const storedBiomarkers = await biomarkerRepository.createBatch(
-      normalizedBiomarkers
-    );
+    const storedBiomarkers = await biomarkerRepository.createBatch(uniqueBiomarkers);
 
     logger.info('Biomarkers stored successfully', {
       count: storedBiomarkers.length,
@@ -181,7 +260,11 @@ ${ocrMarkdown}`;
 
     logger.info('Report date determined', {
       reportId,
-      source: userProvidedDate ? 'user-provided' : extraction.reportDate ? 'extracted' : 'upload-date',
+      source: userProvidedDate
+        ? 'user-provided'
+        : extraction.reportDate
+          ? 'extracted'
+          : 'upload-date',
       date: reportDate.toISOString().split('T')[0],
     });
 
@@ -210,18 +293,14 @@ ${ocrMarkdown}`;
   /**
    * Get biomarkers for a profile with definitions
    */
-  async getBiomarkersWithDefinitions(
-    profileId: string
-  ): Promise<BiomarkerWithDefinition[]> {
+  async getBiomarkersWithDefinitions(profileId: string): Promise<BiomarkerWithDefinition[]> {
     return biomarkerRepository.findByProfileWithDefinitions(profileId);
   }
 
   /**
    * Get latest biomarkers for a profile (one per biomarker type)
    */
-  async getLatestBiomarkers(
-    profileId: string
-  ): Promise<BiomarkerWithDefinition[]> {
+  async getLatestBiomarkers(profileId: string): Promise<BiomarkerWithDefinition[]> {
     return biomarkerRepository.findLatestByProfile(profileId);
   }
 
@@ -275,21 +354,21 @@ ${ocrMarkdown}`;
     const { refRangeLow, refRangeHigh, criticalLow, criticalHigh } = definition;
 
     // Check critical ranges first
-    if (criticalLow !== undefined && value < criticalLow) {
+    if (criticalLow != null && value < criticalLow) {
       return 'low';
     }
-    if (criticalHigh !== undefined && value > criticalHigh) {
+    if (criticalHigh != null && value > criticalHigh) {
       return 'high';
     }
 
     // Check reference ranges
-    if (refRangeLow !== undefined && value < refRangeLow) {
+    if (refRangeLow != null && value < refRangeLow) {
       // Check if it's borderline (within 10% of range)
       const threshold = refRangeLow * 0.9;
       return value >= threshold ? 'borderline' : 'low';
     }
 
-    if (refRangeHigh !== undefined && value > refRangeHigh) {
+    if (refRangeHigh != null && value > refRangeHigh) {
       // Check if it's borderline (within 10% of range)
       const threshold = refRangeHigh * 1.1;
       return value <= threshold ? 'borderline' : 'high';
@@ -329,12 +408,12 @@ ${ocrMarkdown}`;
     // If no reference ranges, use simple value comparison
     if (!definition || (!definition.refRangeLow && !definition.refRangeHigh)) {
       const percentChange = ((current.value - previous.value) / previous.value) * 100;
-      
+
       // Consider stable if change is less than 5%
       if (Math.abs(percentChange) < 5) {
         return 'stable';
       }
-      
+
       // For most biomarkers, lower is better (e.g., cholesterol, glucose)
       // This is a simplification - ideally we'd have metadata about this
       return current.value < previous.value ? 'improving' : 'worsening';
@@ -390,22 +469,21 @@ ${ocrMarkdown}`;
   async getBiomarkerTrend(
     profileId: string,
     nameNormalized: string
-  ): Promise<Array<{
-    value: number;
-    unit: string;
-    reportDate?: Date;
-    status: 'normal' | 'high' | 'low' | 'borderline';
-    refRangeLow?: number;
-    refRangeHigh?: number;
-    trend?: 'improving' | 'worsening' | 'stable' | 'new';
-  }>> {
+  ): Promise<
+    Array<{
+      value: number;
+      unit: string;
+      reportDate?: Date;
+      status: 'normal' | 'high' | 'low' | 'borderline';
+      refRangeLow?: number;
+      refRangeHigh?: number;
+      trend?: 'improving' | 'worsening' | 'stable' | 'new';
+    }>
+  > {
     logger.info('Getting biomarker trend', { profileId, nameNormalized });
 
     // Get historical values with definitions
-    const history = await biomarkerRepository.findHistoricalValues(
-      profileId,
-      nameNormalized
-    );
+    const history = await biomarkerRepository.findHistoricalValues(profileId, nameNormalized);
 
     if (history.length === 0) {
       logger.info('No historical data found for biomarker', {
