@@ -1,78 +1,63 @@
-import { BIOMARKER_ALIASES } from '../constants/biomarkers';
+import { BIOMARKER_OVERRIDES } from '../constants/biomarkers';
 import { logger } from './logger';
 
 /**
- * Normalize a biomarker name to a consistent snake_case canonical form.
- * Uses alias lookup for well-known names, then falls back to snake_case
- * preserving any method qualifiers in parentheses.
+ * Thin normalizer used as a fallback when the LLM doesn't provide nameNormalized.
+ * Primary normalization is now done by the LLM during extraction.
+ *
+ * This normalizer handles two cases:
+ * 1. sanitize() — cleans up an LLM-provided nameNormalized to valid snake_case
+ * 2. normalize() — fallback for when nameNormalized is missing; applies a small
+ *    override table then converts to snake_case
  */
 export class BiomarkerNormalizer {
-  private normalizeWithRules(name: string): string | null {
-    const base = name.toLowerCase().trim().replace(/\s+/g, ' ');
+  /**
+   * Sanitize an LLM-provided nameNormalized to ensure valid snake_case.
+   * Applies overrides for known LLM inconsistencies.
+   */
+  sanitize(nameNormalized: string): string {
+    const cleaned = nameNormalized
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
 
-    // 1. Try with parentheses preserved (e.g. "rbc(electrical impedance)")
-    if (BIOMARKER_ALIASES[base]) return BIOMARKER_ALIASES[base];
-
-    // 2. Try with dashes/underscores replaced but parentheses kept
-    const withSpaces = base.replace(/[-_]/g, ' ');
-    if (BIOMARKER_ALIASES[withSpaces]) return BIOMARKER_ALIASES[withSpaces];
-
-    // 3. Try stripping parentheses (e.g. "glucose (fasting)" → "glucose fasting")
-    const withoutParens = withSpaces.replace(/[()]/g, '').replace(/\s+/g, ' ').trim();
-    if (BIOMARKER_ALIASES[withoutParens]) return BIOMARKER_ALIASES[withoutParens];
-
-    // 4. Try without all special characters
-    const withoutSpecial = withoutParens.replace(/[^a-z0-9\s]/g, '');
-    if (BIOMARKER_ALIASES[withoutSpecial]) return BIOMARKER_ALIASES[withoutSpecial];
-
-    // 5. Partial match — only when there's no parenthetical qualifier.
-    // A name like "RBC(Electrical Impedance)" is a distinct measurement and
-    // must NOT be collapsed to the generic "rbc" alias.
-    const hasQualifier = /\(/.test(base);
-    if (!hasQualifier) {
-      let bestMatch: string | null = null;
-      let bestLength = 0;
-      for (const [alias, normalized] of Object.entries(BIOMARKER_ALIASES)) {
-        if (withoutParens.includes(alias) || alias.includes(withoutParens)) {
-          if (alias.length > bestLength) {
-            bestMatch = normalized;
-            bestLength = alias.length;
-          }
-        }
-      }
-      if (bestMatch) return bestMatch;
+    // Apply overrides for known LLM inconsistencies
+    const overridden = BIOMARKER_OVERRIDES[cleaned];
+    if (overridden) {
+      logger.debug('Biomarker override applied', { original: cleaned, overridden });
+      return overridden;
     }
 
-    return null;
+    return cleaned;
   }
 
   /**
-   * Normalize a biomarker name to its canonical snake_case form.
-   * Alias lookup runs first; unknown names are converted to snake_case
-   * preserving any method qualifier (e.g. "RBC(Electrical Impedance)" → "rbc_electrical_impedance").
+   * Fallback normalize when the LLM doesn't return nameNormalized.
+   * Converts raw biomarker name to snake_case.
    */
   normalize(name: string): string {
-    const ruleResult = this.normalizeWithRules(name);
-    if (ruleResult) {
-      logger.debug('Biomarker normalized with rules', { original: name, normalized: ruleResult });
-      return ruleResult;
+    const base = name.toLowerCase().trim().replace(/\s+/g, ' ');
+
+    // Check overrides first
+    const overridden = BIOMARKER_OVERRIDES[base];
+    if (overridden) {
+      logger.debug('Biomarker normalized via override', { original: name, normalized: overridden });
+      return overridden;
     }
 
-    // snake_case fallback — preserves qualifier content
-    const fallback = name
-      .toLowerCase()
-      .trim()
+    // snake_case conversion
+    const fallback = base
       .replace(/[()]/g, '_')
       .replace(/\s+/g, '_')
+      .replace(/[-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '');
 
     logger.debug('Biomarker normalized to snake_case', { original: name, normalized: fallback });
     return fallback;
-  }
-
-  normalizeBatch(names: string[]): string[] {
-    return names.map((n) => this.normalize(n));
   }
 }
 

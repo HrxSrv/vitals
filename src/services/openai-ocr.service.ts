@@ -49,10 +49,11 @@ export class OpenAIOCRService {
                     text: 'This is a medical lab report PDF. Extract ALL text exactly as it appears across every page, preserving the structure, table layout, biomarker names (including any method qualifiers in parentheses like "RBC(Electrical Impedance)", "MCV(RBC Histogram)"), values, units, and reference ranges. Output as markdown with page separators.',
                   },
                   {
-                    // @ts-expect-error — OpenAI Node SDK types lag behind API; input_file is supported
-                    type: 'input_file',
-                    filename: filename.endsWith('.pdf') ? filename : `${filename}.pdf`,
-                    file_data: `data:application/pdf;base64,${base64Pdf}`,
+                    type: 'file',
+                    file: {
+                      filename: filename.endsWith('.pdf') ? filename : `${filename}.pdf`,
+                      file_data: `data:application/pdf;base64,${base64Pdf}`,
+                    },
                   },
                 ],
               },

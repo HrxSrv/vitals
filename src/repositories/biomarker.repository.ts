@@ -14,6 +14,8 @@ export interface CreateBiomarkerData {
   value: number;
   unit: string;
   reportDate?: Date;
+  refRangeLow?: number;
+  refRangeHigh?: number;
 }
 
 export class BiomarkerRepository {
@@ -35,6 +37,8 @@ export class BiomarkerRepository {
         value: data.value,
         unit: data.unit,
         report_date: data.reportDate?.toISOString().split('T')[0],
+        ref_range_low: data.refRangeLow ?? null,
+        ref_range_high: data.refRangeHigh ?? null,
       })
       .select()
       .single();
@@ -68,6 +72,8 @@ export class BiomarkerRepository {
           value: b.value,
           unit: b.unit,
           report_date: b.reportDate?.toISOString().split('T')[0],
+          ref_range_low: b.refRangeLow ?? null,
+          ref_range_high: b.refRangeHigh ?? null,
         }))
       )
       .select();
@@ -190,8 +196,9 @@ export class BiomarkerRepository {
             displayName: row.def_display_name,
             category: row.def_category,
             unit: row.def_unit,
-            refRangeLow: row.def_ref_range_low,
-            refRangeHigh: row.def_ref_range_high,
+            // Prefer per-row ref ranges (unit-aligned) over definition ranges
+            refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
+            refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
             criticalLow: row.def_critical_low,
             criticalHigh: row.def_critical_high,
             description: row.def_description,
@@ -237,8 +244,9 @@ export class BiomarkerRepository {
             displayName: row.def_display_name,
             category: row.def_category,
             unit: row.def_unit,
-            refRangeLow: row.def_ref_range_low,
-            refRangeHigh: row.def_ref_range_high,
+            // Prefer per-row ref ranges (unit-aligned) over definition ranges
+            refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
+            refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
             criticalLow: row.def_critical_low,
             criticalHigh: row.def_critical_high,
             description: row.def_description,

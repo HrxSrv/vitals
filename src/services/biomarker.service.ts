@@ -1,16 +1,19 @@
 import { getChatProvider } from './ai-provider';
 import { biomarkerRepository } from '../repositories/biomarker.repository';
 import { biomarkerNormalizer } from '../utils/biomarker-normalizer';
+import { alignUnits, detectAndFixScaleMismatch } from '../utils/unit-normalizer';
 import { logger } from '../utils/logger';
 import { Biomarker, BiomarkerWithDefinition } from '../types/domain.types';
 
 export interface ExtractedBiomarker {
   name: string;
+  nameNormalized: string;
   value: number;
   unit: string;
   category?: string;
   refRangeLow?: number;
   refRangeHigh?: number;
+  refRangeUnit?: string;
 }
 
 export interface BiomarkerExtractionResult {
@@ -37,25 +40,44 @@ Instructions:
   "reportDate": "YYYY-MM-DD" or null,
   "biomarkers": [
     {
-      "name": "biomarker name exactly as written in report, including any method qualifiers in parentheses",
+      "name": "biomarker name exactly as written in the report",
+      "nameNormalized": "canonical snake_case identifier (see rules below)",
       "value": numeric value only,
       "unit": "unit of measurement",
       "category": "diabetes|kidney|liver|lipid|thyroid|blood_count|vitamins|hormones|other",
       "refRangeLow": numeric lower bound of reference range or null,
-      "refRangeHigh": numeric upper bound of reference range or null
+      "refRangeHigh": numeric upper bound of reference range or null,
+      "refRangeUnit": "unit of the reference range exactly as written, or null if same as value unit"
     }
   ]
 }
 
 Rules:
 - Extract ALL biomarkers found in the report
-- Preserve the full biomarker name exactly as written, including method qualifiers like "(Electrical Impedance)", "(RBC Histogram)", "(Enzymatic)", etc.
-- Convert values to numbers (remove commas, handle ranges by taking the actual patient value)
-- Include units exactly as shown (mg/dL, g/dL, %, fL, etc.)
-- Extract reference ranges if shown (e.g. "80-100" means refRangeLow=80, refRangeHigh=100)
-- If a biomarker has multiple sub-measurements with different methods, create separate entries for each
-- Ignore duplicate entries for the same biomarker+method combination
+- "name" must preserve the full biomarker name exactly as written in the report
+- "nameNormalized" must be a consistent snake_case canonical identifier. The SAME test must ALWAYS get the same nameNormalized regardless of how the lab writes it (e.g., "SGPT", "ALT", "Alanine Aminotransferase" → all get nameNormalized "alt")
+- DIFFERENT tests must get DIFFERENT nameNormalized values:
+  - Different sample types are different tests: "Serum Albumin" → "albumin", "Urine Albumin" → "urine_albumin"
+  - Different subtypes are different tests: "Total Bilirubin" → "total_bilirubin", "Direct Bilirubin" → "direct_bilirubin", "Indirect Bilirubin" → "indirect_bilirubin"
+- SKIP qualitative/non-numeric results entirely (e.g., "Present", "Absent", "Positive", "Negative", "+", "++", "Trace") — do NOT convert them to numbers
+- Convert numeric values to numbers (remove commas, handle ranges by taking the actual patient value)
+- "unit" must be the unit of the patient value exactly as shown (mg/dL, g/dL, %, /μL, etc.)
+- Extract reference ranges as raw numbers exactly as printed — do NOT convert or scale them
+- "refRangeUnit" must be the unit shown next to the reference range, exactly as written (e.g., "thousand/μL", "×10³/L", "lakhs/μL"). Set to null if the reference range unit is the same as the value unit
+- If a biomarker appears multiple times with different measurement methods, keep only the first numeric value
 - Return ONLY valid JSON, no additional text
+
+Preferred canonical names (use these when applicable, invent new snake_case names for tests not listed):
+fasting_blood_sugar, hba1c, creatinine, blood_urea_nitrogen, egfr, uric_acid,
+alt, ast, alkaline_phosphatase, total_bilirubin, direct_bilirubin, indirect_bilirubin,
+albumin, urine_albumin, total_protein, ggt,
+total_cholesterol, ldl_cholesterol, hdl_cholesterol, vldl_cholesterol, triglycerides,
+tsh, t3, t4, free_t3, free_t4,
+hemoglobin, hematocrit, white_blood_cells, rbc, platelets, mcv, mch, mchc,
+rdw, rdw_cv, rdw_sd, mpv,
+esr, crp,
+sodium, potassium, chloride, calcium, magnesium,
+vitamin_d, vitamin_b12, folate
 
 Lab Report Text:
 ${ocrMarkdown}`;
@@ -67,7 +89,7 @@ ${ocrMarkdown}`;
       }>(
         prompt,
         ocrMarkdown,
-        '{ reportDate?: string, biomarkers: Array<{ name: string, value: number, unit: string, category?: string, refRangeLow?: number, refRangeHigh?: number }> }'
+        '{ reportDate?: string, biomarkers: Array<{ name: string, nameNormalized: string, value: number, unit: string, category?: string, refRangeLow?: number, refRangeHigh?: number, refRangeUnit?: string }> }'
       );
 
       logger.info('Biomarker extraction successful', {
@@ -107,11 +129,29 @@ ${ocrMarkdown}`;
       profileId,
     });
 
-    // Normalize biomarker names — no longer needs the definitions list as a hint,
-    // since we auto-create definitions from extracted data
+    // Use LLM-provided nameNormalized when available; fall back to normalizer for safety
     const normalizedBiomarkers = extractedBiomarkers.map((biomarker) => {
-      const nameNormalized = biomarkerNormalizer.normalize(biomarker.name);
+      const nameNormalized = biomarker.nameNormalized
+        ? biomarkerNormalizer.sanitize(biomarker.nameNormalized)
+        : biomarkerNormalizer.normalize(biomarker.name);
       const category = biomarker.category;
+
+      // Layer 1: Align ref range units to value units using the LLM-provided refRangeUnit
+      let { refRangeLow, refRangeHigh } = alignUnits(
+        biomarker.value,
+        biomarker.unit,
+        biomarker.refRangeLow,
+        biomarker.refRangeHigh,
+        biomarker.refRangeUnit,
+      );
+
+      // Layer 2: Safety net — if value is still wildly outside ref range,
+      // try common multipliers to auto-correct
+      const safetyCheck = detectAndFixScaleMismatch(biomarker.value, refRangeLow, refRangeHigh);
+      if (safetyCheck.corrected) {
+        refRangeLow = safetyCheck.refRangeLow;
+        refRangeHigh = safetyCheck.refRangeHigh;
+      }
 
       return {
         reportId,
@@ -123,8 +163,8 @@ ${ocrMarkdown}`;
         value: biomarker.value,
         unit: biomarker.unit,
         reportDate,
-        refRangeLow: biomarker.refRangeLow,
-        refRangeHigh: biomarker.refRangeHigh,
+        refRangeLow,
+        refRangeHigh,
       };
     });
 
@@ -314,21 +354,21 @@ ${ocrMarkdown}`;
     const { refRangeLow, refRangeHigh, criticalLow, criticalHigh } = definition;
 
     // Check critical ranges first
-    if (criticalLow !== undefined && value < criticalLow) {
+    if (criticalLow != null && value < criticalLow) {
       return 'low';
     }
-    if (criticalHigh !== undefined && value > criticalHigh) {
+    if (criticalHigh != null && value > criticalHigh) {
       return 'high';
     }
 
     // Check reference ranges
-    if (refRangeLow !== undefined && value < refRangeLow) {
+    if (refRangeLow != null && value < refRangeLow) {
       // Check if it's borderline (within 10% of range)
       const threshold = refRangeLow * 0.9;
       return value >= threshold ? 'borderline' : 'low';
     }
 
-    if (refRangeHigh !== undefined && value > refRangeHigh) {
+    if (refRangeHigh != null && value > refRangeHigh) {
       // Check if it's borderline (within 10% of range)
       const threshold = refRangeHigh * 1.1;
       return value <= threshold ? 'borderline' : 'high';

@@ -95,7 +95,7 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {dashboard.latestBiomarkers.length > 0 && (
+              {dashboard?.latestBiomarkers?.length > 0 && (
                 <section>
                   <div className="flex items-center justify-between px-4 lg:px-0 mb-3">
                     <h2 className="font-display text-lg font-semibold text-foreground">Key Markers</h2>
@@ -104,7 +104,7 @@ export default function DashboardPage() {
                     </Link>
                   </div>
                   <div className="px-4 lg:px-0">
-                    <BiomarkerGrid biomarkers={dashboard.latestBiomarkers} />
+                    <BiomarkerGrid biomarkers={dashboard!.latestBiomarkers} />
                   </div>
                 </section>
               )}
@@ -125,7 +125,7 @@ export default function DashboardPage() {
                 </section>
               )}
 
-              {dashboard.lhm && (
+              {dashboard?.lhm && (
                 <div className="px-4 lg:hidden">
                   <button
                     onClick={() => setShowLHM(true)}
@@ -147,7 +147,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="hidden lg:flex flex-col gap-5">
-              {dashboard.lhm && (
+              {dashboard?.lhm && (
                 <button
                   onClick={() => setShowLHM(true)}
                   className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-card transition-all hover:shadow-lg"
@@ -187,7 +187,7 @@ export default function DashboardPage() {
 
       {!isEmpty && dashboard?.lhm && activeProfile && (
         <LHMViewer
-          markdown={dashboard.lhm.markdown}
+          markdown={dashboard!.lhm!.markdown}
           profileName={activeProfile.name}
           isOpen={showLHM}
           onClose={() => setShowLHM(false)}
