@@ -15,6 +15,13 @@ import {
 import { ProfileCard } from '@/components/profile/ProfileCard';
 import { ProfileForm } from '@/components/profile/ProfileForm';
 import { Header } from '@/components/layout/Header';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '@/components/ui/dialog';
 import type { Profile, ProfileFormData } from '@/lib/types';
 
 export default function ProfilePage() {
@@ -145,44 +152,40 @@ export default function ProfilePage() {
       </main>
 
       {/* Create/Edit Modal */}
-      {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => { setModalMode(null); setEditingProfile(null); }} />
-          <div className="relative w-full max-w-[480px] mx-auto bg-white rounded-3xl px-5 pt-5 pb-8 animate-fade-up max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-xl font-semibold">
-                {modalMode === 'create' ? 'Add Profile' : 'Edit Profile'}
-              </h3>
-              <button onClick={() => { setModalMode(null); setEditingProfile(null); }} className="p-2 rounded-xl hover:bg-muted">
-                <X size={20} />
-              </button>
-            </div>
-            <ProfileForm
-              profile={editingProfile ?? undefined}
-              onSubmit={modalMode === 'create' ? handleCreate : handleEdit}
-              onCancel={() => { setModalMode(null); setEditingProfile(null); }}
-              isLoading={isCreating || isUpdating}
-            />
-          </div>
-        </div>
-      )}
+      <Dialog open={!!modalMode} onOpenChange={(open: boolean) => { if (!open) { setModalMode(null); setEditingProfile(null); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {modalMode === 'create' ? 'Add Profile' : 'Edit Profile'}
+            </DialogTitle>
+            <DialogClose className="p-2 rounded-xl hover:bg-muted">
+              <X size={20} />
+            </DialogClose>
+          </DialogHeader>
+          <ProfileForm
+            profile={editingProfile ?? undefined}
+            onSubmit={modalMode === 'create' ? handleCreate : handleEdit}
+            onCancel={() => { setModalMode(null); setEditingProfile(null); }}
+            isLoading={isCreating || isUpdating}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirm */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm animate-fade-up">
-            <h3 className="font-display text-lg font-semibold mb-2">Remove {deleteConfirm.name}?</h3>
-            <p className="text-sm text-muted-foreground mb-5">
-              All health data and reports for this profile will be permanently deleted.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold">Cancel</button>
-              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-xl bg-accent-500 text-white text-sm font-semibold">Remove</button>
-            </div>
+      <Dialog open={!!deleteConfirm} onOpenChange={(open: boolean) => { if (!open) setDeleteConfirm(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Remove {deleteConfirm?.name}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-5">
+            All health data and reports for this profile will be permanently deleted.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold">Cancel</button>
+            <button onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-xl bg-accent-500 text-white text-sm font-semibold">Remove</button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

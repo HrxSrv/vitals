@@ -10,6 +10,7 @@ import { ChatInput } from '@/components/chat/ChatInput';
 import { QuickQuestions } from '@/components/chat/QuickQuestions';
 import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { Header } from '@/components/layout/Header';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function ChatPage() {
   const { data: profiles = [] } = useProfiles();
@@ -58,16 +59,18 @@ export default function ChatPage() {
       />
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-8 py-4 space-y-3 pb-4">
-        {messages.length === 0 ? (
-          <EmptyChat />
-        ) : (
-          messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} />
-          ))
-        )}
-        <div ref={bottomRef} />
-      </div>
+      <ScrollArea className="flex-1 px-4 lg:px-8">
+        <div className="py-4 space-y-3 pb-4">
+          {messages.length === 0 ? (
+            <EmptyChat />
+          ) : (
+            messages.map((msg) => (
+              <ChatMessage key={msg.id} message={msg} />
+            ))
+          )}
+          <div ref={bottomRef} />
+        </div>
+      </ScrollArea>
 
       {/* Quick questions */}
       <div className="py-2 bg-background/90 backdrop-blur-sm border-t border-border">

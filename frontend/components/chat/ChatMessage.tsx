@@ -3,6 +3,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils/cn';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { ChatMessage as ChatMessageType } from '@/lib/types';
 import { User, Bot } from 'lucide-react';
 
@@ -19,18 +20,21 @@ export function ChatMessage({ message }: ChatMessageProps) {
       isUser ? 'flex-row-reverse' : 'flex-row'
     )}>
       {/* Avatar */}
-      <div className={cn(
-        'flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full',
-        isUser 
-          ? 'bg-primary-500 text-white' 
-          : 'bg-muted text-foreground'
+      <Avatar className={cn(
+        'h-8 w-8',
+        isUser ? 'bg-primary-500' : 'bg-muted'
       )}>
-        {isUser ? (
-          <User size={16} strokeWidth={2} />
-        ) : (
-          <Bot size={16} strokeWidth={2} />
-        )}
-      </div>
+        <AvatarFallback className={cn(
+          'border-0',
+          isUser ? 'bg-primary-500 text-white' : 'bg-muted text-foreground'
+        )}>
+          {isUser ? (
+            <User size={16} strokeWidth={2} />
+          ) : (
+            <Bot size={16} strokeWidth={2} />
+          )}
+        </AvatarFallback>
+      </Avatar>
 
       {/* Message Content */}
       <div className={cn(

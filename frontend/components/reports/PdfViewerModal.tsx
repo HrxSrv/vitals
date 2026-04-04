@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import { X, Download } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 interface PdfViewerModalProps {
   isOpen: boolean;
@@ -12,8 +19,6 @@ interface PdfViewerModalProps {
 
 export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerModalProps) {
   const [isLoading, setIsLoading] = useState(true);
-
-  if (!isOpen) return null;
 
   const handleDownload = async () => {
     try {
@@ -33,14 +38,14 @@ export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 bg-white rounded-2xl shadow-2xl flex flex-col">
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-6xl h-[90vh] p-0 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-foreground truncate flex-1">
+        <DialogHeader className="p-4 border-b border-gray-200">
+          <DialogTitle className="truncate flex-1 pr-24">
             {fileName}
-          </h2>
-          <div className="flex items-center gap-2">
+          </DialogTitle>
+          <div className="absolute right-4 top-4 flex items-center gap-2">
             <button
               onClick={handleDownload}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
@@ -48,14 +53,11 @@ export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerM
               <Download size={16} />
               Download
             </button>
-            <button
-              onClick={onClose}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded-lg transition-colors"
-            >
+            <DialogClose className="p-2 text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded-lg transition-colors">
               <X size={20} />
-            </button>
+            </DialogClose>
           </div>
-        </div>
+        </DialogHeader>
 
         {/* PDF Viewer */}
         <div className="flex-1 relative bg-gray-100 overflow-hidden">
@@ -89,7 +91,7 @@ export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerM
             </div>
           </object>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
