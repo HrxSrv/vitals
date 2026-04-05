@@ -59,7 +59,7 @@ export function SideNav() {
         <div className="flex items-center justify-between px-2 space-x-9">
           <p className="text-[11px] text-muted-foreground">Health Intelligence</p>
           <span className="text-[9px] font-mono font-semibold text-primary-500/70 bg-primary-50 px-1.5 py-0.5 rounded">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || '2.1'}
+            v2.4
           </span>
         </div>
       </div>

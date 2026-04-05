@@ -83,9 +83,13 @@ export default function ProfilePage() {
             {/* User info */}
             <div className="bg-white rounded-2xl shadow-card p-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-lg">
-                  {user?.name?.charAt(0).toUpperCase() ?? '?'}
-                </div>
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-lg">
+                    {user?.name?.charAt(0).toUpperCase() ?? '?'}
+                  </div>
+                )}
                 <div>
                   <p className="font-semibold text-foreground">{user?.name}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>

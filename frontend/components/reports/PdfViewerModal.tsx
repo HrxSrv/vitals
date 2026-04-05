@@ -39,7 +39,7 @@ export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerM
 
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-6xl h-[90vh] p-0 flex flex-col">
+      <DialogContent className="sm:max-w-6xl h-[90vh] p-0 flex flex-col" showCloseButton={false}>
         {/* Header */}
         <DialogHeader className="p-4 border-b border-gray-200">
           <DialogTitle className="truncate flex-1 pr-24">
@@ -48,7 +48,7 @@ export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerM
           <div className="absolute right-4 top-4 flex items-center gap-2">
             <button
               onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+              className="lg:hidden flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
             >
               <Download size={16} />
               Download

@@ -8,6 +8,7 @@ export interface User {
   id: string; // Supabase Auth user ID
   email: string;
   name?: string;
+  avatarUrl?: string;
 }
 
 export type RelationshipType =

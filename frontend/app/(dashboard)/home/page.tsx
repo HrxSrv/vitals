@@ -186,7 +186,6 @@ export default function DashboardPage() {
                 </section>
               )}
 
-              <UsageCard />
             </div>
           </div>
         )}

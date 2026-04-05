@@ -28,6 +28,7 @@ export class AuthService {
         id: authUser.id,
         email: authUser.email!,
         name: authUser.user_metadata?.name,
+        avatarUrl: authUser.user_metadata?.avatar_url,
       };
     } catch (error) {
       if (error instanceof AuthenticationError) {
