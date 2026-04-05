@@ -151,7 +151,7 @@ export class DashboardService {
             totalReports,
           });
 
-          return {
+          const result = {
             profile,
             summary: {
               totalReports,
@@ -161,6 +161,16 @@ export class DashboardService {
             latestBiomarkers: biomarkersWithStatus,
             lhm,
           };
+
+          // If there are reports but no biomarkers, processing is likely
+          // still in progress — use a short TTL so the cache refreshes quickly
+          if (totalReports > 0 && biomarkersWithStatus.length === 0) {
+            logger.info('Reports exist but no biomarkers yet — using short cache TTL', { profileId });
+            cache.set(cacheKey, result, 15); // 15 seconds
+            return result;
+          }
+
+          return result;
         },
         600 // 10 minutes cache
       );

@@ -24,7 +24,7 @@ export class OpenAIChatService implements AIChatProvider {
             model: this.model,
             messages,
             temperature,
-            max_tokens: maxTokens,
+            max_completion_tokens: maxTokens,
           });
           const content = response.choices[0]?.message?.content;
           if (!content) throw new ExternalServiceError('OpenAI Chat', 'No response generated');
@@ -51,7 +51,7 @@ export class OpenAIChatService implements AIChatProvider {
         model: this.model,
         messages,
         temperature,
-        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
         stream: true,
       });
       for await (const chunk of stream) {

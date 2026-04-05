@@ -196,11 +196,13 @@ export class BiomarkerRepository {
             displayName: row.def_display_name,
             category: row.def_category,
             unit: row.def_unit,
-            // Prefer per-row ref ranges (unit-aligned) over definition ranges
+            // Prefer per-row ref ranges (unit-aligned) over definition ranges.
+            // When per-row ranges exist, ignore definition criticals — they may
+            // be in a different unit scale than the biomarker value.
             refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
             refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
-            criticalLow: row.def_critical_low,
-            criticalHigh: row.def_critical_high,
+            criticalLow: row.ref_range_low != null ? undefined : row.def_critical_low,
+            criticalHigh: row.ref_range_low != null ? undefined : row.def_critical_high,
             description: row.def_description,
           }
         : undefined,
@@ -244,11 +246,13 @@ export class BiomarkerRepository {
             displayName: row.def_display_name,
             category: row.def_category,
             unit: row.def_unit,
-            // Prefer per-row ref ranges (unit-aligned) over definition ranges
+            // Prefer per-row ref ranges (unit-aligned) over definition ranges.
+            // When per-row ranges exist, ignore definition criticals — they may
+            // be in a different unit scale than the biomarker value.
             refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
             refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
-            criticalLow: row.def_critical_low,
-            criticalHigh: row.def_critical_high,
+            criticalLow: row.ref_range_low != null ? undefined : row.def_critical_low,
+            criticalHigh: row.ref_range_low != null ? undefined : row.def_critical_high,
             description: row.def_description,
           }
         : undefined,
