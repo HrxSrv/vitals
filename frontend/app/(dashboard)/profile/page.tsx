@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, X, LogOut, ChevronRight } from 'lucide-react';
+import { Plus, LogOut, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
 import { useProfileStore } from '@/lib/store/profileStore';
 import {
@@ -20,7 +20,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from '@/components/ui/dialog';
 import type { Profile, ProfileFormData } from '@/lib/types';
 
@@ -162,9 +161,6 @@ export default function ProfilePage() {
             <DialogTitle>
               {modalMode === 'create' ? 'Add Profile' : 'Edit Profile'}
             </DialogTitle>
-            <DialogClose className="p-2 rounded-xl hover:bg-muted">
-              <X size={20} />
-            </DialogClose>
           </DialogHeader>
           <ProfileForm
             profile={editingProfile ?? undefined}
