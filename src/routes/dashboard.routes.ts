@@ -21,4 +21,10 @@ router.get('/', authMiddleware, dashboardController.getDashboard);
  */
 router.get('/all', authMiddleware, dashboardController.getAllDashboards);
 
+/**
+ * GET /api/dashboard/usage
+ * Get current month's page usage and limit for the authenticated user
+ */
+router.get('/usage', authMiddleware, dashboardController.getUsage);
+
 export default router;

@@ -1,9 +1,11 @@
+import { PDFDocument } from 'pdf-lib';
 import { reportRepository } from '../repositories/report.repository';
 import { embeddingRepository } from '../repositories/embedding.repository';
 import { storageService } from './storage.service';
 import { queueService } from './queue.service';
 import { biomarkerService } from './biomarker.service';
 import { dashboardService } from './dashboard.service';
+import { usageService } from './usage.service';
 import profileRepository from '../repositories/profile.repository';
 import { Report } from '../types/domain.types';
 import { HttpError, NotFoundError, AuthorizationError } from '../utils/httpError';
@@ -42,6 +44,11 @@ export class ReportService {
         throw new AuthorizationError('Unauthorized to upload reports for this profile');
       }
 
+      // Count pages and check usage quota before uploading
+      const pdfDoc = await PDFDocument.load(file);
+      const pageCount = pdfDoc.getPageCount();
+      await usageService.checkQuota(userId, pageCount);
+
       // Upload file to storage
       const fileUrl = await storageService.uploadFile(userId, profileId, file, filename);
 
@@ -53,7 +60,10 @@ export class ReportService {
         reportDate,
       });
 
-      logger.info(`Report uploaded successfully: ${report.id}`);
+      // Record usage (non-blocking — failure doesn't block upload)
+      await usageService.recordUsage(userId, report.id, pageCount);
+
+      logger.info(`Report uploaded successfully: ${report.id}, pages: ${pageCount}`);
 
       // Invalidate dashboard cache immediately so the frontend sees totalReports > 0
       // and can show the processing state rather than the empty state

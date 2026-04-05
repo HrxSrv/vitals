@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchDashboard } from '../api/dashboard';
+import { fetchDashboard, fetchUsage } from '../api/dashboard';
 
 export const useDashboard = (profileId: string | null) =>
   useQuery({
@@ -15,4 +15,11 @@ export const useDashboard = (profileId: string | null) =>
       const isProcessing = data && data.summary.totalReports > 0 && data.summary.biomarkerCount === 0;
       return isProcessing ? 5000 : false;
     },
+  });
+
+export const useUsage = () =>
+  useQuery({
+    queryKey: ['usage'],
+    queryFn: fetchUsage,
+    staleTime: 60 * 1000, // 1 minute
   });

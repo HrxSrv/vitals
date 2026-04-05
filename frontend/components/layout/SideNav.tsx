@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, FileText, TrendingUp, MessageCircle, User, Leaf } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { UsageCard } from '@/components/dashboard/UsageCard';
 
 const NAV_ITEMS = [
   { href: '/home',    label: 'Home',      icon: LayoutDashboard },
@@ -52,9 +53,15 @@ export function SideNav() {
         })}
       </nav>
 
-      {/* Footer hint */}
-      <div className="px-5 py-4 border-t border-border">
-        <p className="text-[11px] text-muted-foreground">Health Intelligence</p>
+      {/* Usage + footer */}
+      <div className="px-3 py-4 border-t border-border space-y-3">
+        <UsageCard />
+        <div className="flex items-center justify-between px-2 space-x-9">
+          <p className="text-[11px] text-muted-foreground">Health Intelligence</p>
+          <span className="text-[9px] font-mono font-semibold text-primary-500/70 bg-primary-50 px-1.5 py-0.5 rounded">
+            v{process.env.NEXT_PUBLIC_APP_VERSION || '2.1'}
+          </span>
+        </div>
       </div>
     </aside>
   );

@@ -40,7 +40,7 @@ export function ReportCard({ report }: ReportCardProps) {
   };
 
   return (
-    <Link href={`/reports/${report.id}`}>
+    <Link href={`/reports/${report.id}`} className="block">
       <div className="bg-white rounded-2xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex items-center gap-3">
         {/* Date block */}
         <div className="w-12 h-12 rounded-xl bg-primary-50 flex flex-col items-center justify-center flex-shrink-0">

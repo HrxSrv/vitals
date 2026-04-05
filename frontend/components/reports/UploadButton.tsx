@@ -49,7 +49,7 @@ export function UploadButton({ profileId, variant = 'icon', label }: UploadButto
       {variant === 'primary' ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-colors shadow-lg shadow-primary-500/30"
+          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 active:scale-[0.98] text-white px-6 py-3 rounded-full font-semibold text-sm transition-all shadow-soft hover:shadow-soft-lg"
         >
           <Upload size={18} />
           {label ?? 'Upload Report'}
@@ -57,11 +57,11 @@ export function UploadButton({ profileId, variant = 'icon', label }: UploadButto
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 active:scale-95 text-white px-3 py-1.5 rounded-xl text-sm font-semibold transition-all duration-200"
+          className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 active:scale-95 text-white px-3 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 shadow-soft"
           aria-label="Upload report"
         >
           <Upload size={15} strokeWidth={2.5} />
-          <span>Upload</span>
+          <span className="tracking-tight-sm">Upload</span>
         </button>
       )}
 

@@ -13,6 +13,7 @@ import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { UploadButton } from '@/components/reports/UploadButton';
 import { ReportCard } from '@/components/reports/ReportCard';
 import { LHMViewer } from '@/components/lhm/LHMViewer';
+import { UsageCard } from '@/components/dashboard/UsageCard';
 import { useReports } from '@/lib/hooks/useReports';
 
 export default function DashboardPage() {
@@ -45,14 +46,14 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="sticky-header px-4 lg:px-8 py-3 flex items-center justify-between gap-3">
+      <header className="sticky-header px-4 lg:px-8 py-3 flex items-center justify-between gap-3 backdrop-blur-md bg-background/95">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0 lg:hidden">
             <Leaf size={16} className="text-primary-600" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] lg:text-xs text-muted-foreground font-medium">Good day,</p>
-            <p className="text-sm lg:text-base font-bold text-foreground leading-tight truncate">
+            <p className="text-[10px] lg:text-xs text-muted-foreground font-medium tracking-tight-sm">Good day,</p>
+            <p className="text-sm lg:text-base font-bold text-foreground leading-tight-heading tracking-tight-md truncate">
               {user?.name?.split(' ')[0] ?? 'there'}
             </p>
           </div>
@@ -90,16 +91,16 @@ export default function DashboardPage() {
               <div className="lg:mx-0">
                 <HealthSummaryCard
                   profile={activeProfile}
-                  summary={dashboard?.summary ?? { totalReports: reports.length, biomarkerCount: 0, latestReportDate: null }}
+                  summary={dashboard?.summary ?? { totalReports: reports.length, biomarkerCount: 0, latestReportDate: null, daysSinceLastReport: null }}
                   alertCount={alertCount}
                 />
               </div>
 
-              {dashboard?.latestBiomarkers?.length > 0 && (
+              {(dashboard?.latestBiomarkers?.length ?? 0) > 0 && (
                 <section>
-                  <div className="flex items-center justify-between px-4 lg:px-0 mb-3">
-                    <h2 className="font-display text-lg font-semibold text-foreground">Key Markers</h2>
-                    <Link href="/reports" className="text-xs text-primary-600 font-semibold flex items-center gap-0.5">
+                  <div className="flex items-center justify-between px-4 lg:px-0 mb-4">
+                    <h2 className="font-display text-lg font-semibold text-foreground leading-tight-heading tracking-tight-lg">Key Markers</h2>
+                    <Link href="/reports" className="text-xs text-primary-600 font-semibold flex items-center gap-0.5 hover:underline transition-all">
                       View all <ChevronRight size={13} />
                     </Link>
                   </div>
@@ -109,11 +110,35 @@ export default function DashboardPage() {
                 </section>
               )}
 
+              {/* Mobile: Health Summary & Usage as horizontal cards */}
+              <section className="lg:hidden">
+                <div className="px-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {dashboard?.lhm && (
+                      <button
+                        onClick={() => setShowLHM(true)}
+                        className="bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-3 h-full shadow-soft transition-all active:scale-[0.98]"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                          <FileText size={20} />
+                        </div>
+                        <div className="text-center">
+                          <p className="font-semibold text-sm leading-tight-heading tracking-tight-md">Health Summary</p>
+                          <p className="text-[10px] text-white/70 mt-0.5 tracking-tight-sm">View full report</p>
+                        </div>
+                      </button>
+                    )}
+                    
+                    <UsageCard isMobile />
+                  </div>
+                </div>
+              </section>
+
               {recentReports.length > 0 && (
                 <section className="lg:hidden">
-                  <div className="flex items-center justify-between px-4 mb-3">
-                    <h2 className="font-display text-lg font-semibold text-foreground">Recent Reports</h2>
-                    <Link href="/reports" className="text-xs text-primary-600 font-semibold flex items-center gap-0.5">
+                  <div className="flex items-center justify-between px-4 mb-4">
+                    <h2 className="font-display text-lg font-semibold text-foreground leading-tight-heading tracking-tight-lg">Recent Reports</h2>
+                    <Link href="/reports" className="text-xs text-primary-600 font-semibold flex items-center gap-0.5 hover:underline transition-all">
                       All reports <ChevronRight size={13} />
                     </Link>
                   </div>
@@ -124,41 +149,21 @@ export default function DashboardPage() {
                   </div>
                 </section>
               )}
-
-              {dashboard?.lhm && (
-                <div className="px-4 lg:hidden">
-                  <button
-                    onClick={() => setShowLHM(true)}
-                    className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-card transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                        <FileText size={20} />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-sm">View Health Summary</p>
-                        <p className="text-xs text-white/80">Your full health overview</p>
-                      </div>
-                    </div>
-                    <ChevronRight size={20} className="text-white/80" />
-                  </button>
-                </div>
-              )}
             </div>
 
-            <div className="hidden lg:flex flex-col gap-5">
+            <div className="hidden lg:flex flex-col gap-6">
               {dashboard?.lhm && (
                 <button
                   onClick={() => setShowLHM(true)}
-                  className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-card transition-all hover:shadow-lg"
+                  className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-soft transition-all hover:shadow-soft-lg active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                       <FileText size={20} />
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-sm">Health Summary</p>
-                      <p className="text-xs text-white/80">Your full health overview</p>
+                      <p className="font-semibold text-sm leading-tight-heading tracking-tight-md">Health Summary</p>
+                      <p className="text-xs text-white/80 tracking-tight-sm">Your full health overview</p>
                     </div>
                   </div>
                   <ChevronRight size={20} className="text-white/80" />
@@ -167,9 +172,9 @@ export default function DashboardPage() {
 
               {recentReports.length > 0 && (
                 <section>
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-display text-lg font-semibold text-foreground">Recent Reports</h2>
-                    <Link href="/reports" className="text-xs text-primary-600 font-semibold flex items-center gap-0.5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-display text-lg font-semibold text-foreground leading-tight-heading tracking-tight-lg">Recent Reports</h2>
+                    <Link href="/reports" className="text-xs text-primary-600 font-semibold flex items-center gap-0.5 hover:underline transition-all">
                       All <ChevronRight size={13} />
                     </Link>
                   </div>
@@ -180,6 +185,8 @@ export default function DashboardPage() {
                   </div>
                 </section>
               )}
+
+              <UsageCard />
             </div>
           </div>
         )}
