@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Download } from 'lucide-react';
 import {
   Dialog,
@@ -19,6 +19,13 @@ interface PdfViewerModalProps {
 
 export function PdfViewerModal({ isOpen, onClose, pdfUrl, fileName }: PdfViewerModalProps) {
   const [isLoading, setIsLoading] = useState(true);
+
+  // Fallback: clear loader after 3s — mobile browsers don't fire onLoad for <object> PDFs
+  useEffect(() => {
+    if (!isOpen) { setIsLoading(true); return; }
+    const timer = setTimeout(() => setIsLoading(false), 3000);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   const handleDownload = async () => {
     try {
