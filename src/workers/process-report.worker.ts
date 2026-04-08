@@ -10,8 +10,11 @@ const ocrService =
     ? openAIOCRService
     : mistralOCRService;
 import { biomarkerService } from '../services/biomarker.service';
+import { emailService } from '../services/email.service';
+import { notificationRepository } from '../repositories/notification.repository';
 import { queueService } from '../services/queue.service';
 import { dashboardService } from '../services/dashboard.service';
+import { supabaseAdmin } from '../services/supabase.service';
 import { logger } from '../utils/logger';
 
 /**
@@ -106,6 +109,39 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
 
     // Invalidate dashboard cache so biomarker counts are fresh
     dashboardService.invalidateCache(profileId);
+
+    const notificationPreferences = await notificationRepository.findByUserId(userId);
+    if (notificationPreferences.reportReadyEmailEnabled) {
+      try {
+        const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+
+        if (userError || !user?.user?.email) {
+          logger.warn('Skipping report ready email because user email could not be fetched', {
+            reportId,
+            userId,
+            error: userError?.message,
+          });
+        } else {
+          const frontendUrl = process.env.FRONTEND_URL || 'https://www.vithos.in';
+          const reportUrl = new URL(`/reports/${reportId}`, frontendUrl).toString();
+          const reportDateForEmail = extractedDate || report.reportDate;
+
+          await emailService.sendReportReady(user.user.email, {
+            reportId,
+            reportDate: reportDateForEmail ?? undefined,
+            reportUrl,
+            userName: user.user.user_metadata?.name || user.user.email.split('@')[0],
+            biomarkerCount: biomarkers.length,
+          });
+        }
+      } catch (emailError) {
+        logger.error('Failed to send report ready email', {
+          reportId,
+          userId,
+          error: emailError instanceof Error ? emailError.message : emailError,
+        });
+      }
+    }
 
     await job.updateProgress(100);
   } catch (error: any) {

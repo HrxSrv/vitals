@@ -152,18 +152,21 @@ export type Database = {
           digest_frequency: string | null;
           email_digest_enabled: boolean | null;
           last_sent_at: string | null;
+          report_ready_email_enabled: boolean | null;
           user_id: string;
         };
         Insert: {
           digest_frequency?: string | null;
           email_digest_enabled?: boolean | null;
           last_sent_at?: string | null;
+          report_ready_email_enabled?: boolean | null;
           user_id: string;
         };
         Update: {
           digest_frequency?: string | null;
           email_digest_enabled?: boolean | null;
           last_sent_at?: string | null;
+          report_ready_email_enabled?: boolean | null;
           user_id?: string;
         };
         Relationships: [

@@ -9,6 +9,7 @@ import { notificationService } from '../../services/notification.service';
  * {
  *   emailDigestEnabled?: boolean;
  *   digestFrequency?: 'monthly' | 'quarterly';
+ *   reportReadyEmailEnabled?: boolean;
  * }
  */
 export async function updateNotificationPreferences(
@@ -18,11 +19,12 @@ export async function updateNotificationPreferences(
 ) {
   try {
     const userId = req.user!.id;
-    const { emailDigestEnabled, digestFrequency } = req.body;
+    const { emailDigestEnabled, digestFrequency, reportReadyEmailEnabled } = req.body;
 
     const preferences = await notificationService.updatePreferences(userId, {
       emailDigestEnabled,
       digestFrequency,
+      reportReadyEmailEnabled,
     });
 
     res.json({ preferences });

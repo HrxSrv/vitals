@@ -24,6 +24,7 @@ export class NotificationService {
     data: {
       emailDigestEnabled?: boolean;
       digestFrequency?: 'monthly' | 'quarterly';
+      reportReadyEmailEnabled?: boolean;
     }
   ): Promise<NotificationPreferences> {
     logger.info('Updating notification preferences', { userId, data });

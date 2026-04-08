@@ -46,6 +46,7 @@ export class NotificationRepository {
         email_digest_enabled: true,
         digest_frequency: 'monthly',
         last_sent_at: null,
+        report_ready_email_enabled: true,
       })
       .select()
       .single();
@@ -69,6 +70,7 @@ export class NotificationRepository {
     data: {
       emailDigestEnabled?: boolean;
       digestFrequency?: 'monthly' | 'quarterly';
+      reportReadyEmailEnabled?: boolean;
     }
   ): Promise<NotificationPreferences> {
     const updateData: Record<string, any> = {};
@@ -78,6 +80,9 @@ export class NotificationRepository {
     }
     if (data.digestFrequency !== undefined) {
       updateData.digest_frequency = data.digestFrequency;
+    }
+    if (data.reportReadyEmailEnabled !== undefined) {
+      updateData.report_ready_email_enabled = data.reportReadyEmailEnabled;
     }
 
     const { data: prefs, error } = await supabaseAdmin
@@ -180,6 +185,7 @@ export class NotificationRepository {
       emailDigestEnabled: row.email_digest_enabled,
       digestFrequency: row.digest_frequency,
       lastSentAt: row.last_sent_at ? new Date(row.last_sent_at) : undefined,
+      reportReadyEmailEnabled: row.report_ready_email_enabled,
     };
   }
 }

@@ -121,4 +121,5 @@ export interface NotificationPreferences {
   emailDigestEnabled: boolean;
   digestFrequency: DigestFrequency;
   lastSentAt?: Date;
+  reportReadyEmailEnabled: boolean;
 }
