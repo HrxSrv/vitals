@@ -38,13 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const u = session.user;
-        setUser({
-          id: u.id,
-          email: u.email ?? '',
-          name: (u.user_metadata?.name as string) ?? u.email ?? '',
-        });
 
-        // Auto-create a default "self" profile if the user has none
+        // Ensure a default profile exists BEFORE revealing the dashboard.
+        // This prevents the brief "Create your first profile" flash on
+        // first login while the DB trigger is still running.
         try {
           const profiles = await fetchProfiles();
           if (profiles.length === 0) {
@@ -52,8 +49,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await createProfile({ name, relationship: 'self' });
           }
         } catch {
-          // Non-fatal
+          // Non-fatal — DB trigger likely created the profile already
         }
+
+        // Only now clear isLoading so the dashboard can render
+        setUser({
+          id: u.id,
+          email: u.email ?? '',
+          name: (u.user_metadata?.name as string) ?? u.email ?? '',
+        });
       } else {
         setUser(null);
       }
