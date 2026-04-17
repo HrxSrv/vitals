@@ -3,127 +3,112 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vithos v2.5 is here</title>
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>Vithos v2.6 is here</title>
   <!--[if mso]><style>* { font-family: Georgia, serif !important; }</style><![endif]-->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Dark-mode overrides for clients that honour prefers-color-scheme
+       (Apple Mail iOS/macOS, Outlook 365, Outlook.com, Outlook iOS/Android).
+       Gmail auto-darkens on its own using heuristics; colours below also
+       pick hex values that survive Gmail's partial-invert reasonably well. */
+    @media (prefers-color-scheme: dark) {
+      .body-bg       { background-color: #0f1311 !important; }
+      .main-card     { background-color: #151a17 !important; box-shadow: 0 8px 32px rgba(0,0,0,0.35) !important; }
+      .card          { background-color: #1a201c !important; border-color: #2a322d !important; }
+      .card-title    { color: #e8ebe4 !important; }
+      .card-body     { color: #a4aba0 !important; }
+      .intro-text    { color: #c6cac2 !important; }
+      .tag-sage      { background-color: #1e3322 !important; color: #7fc48b !important; }
+      .tag-terra     { background-color: #3d2621 !important; color: #f5a891 !important; }
+      .divider-line  { background-image: linear-gradient(90deg, transparent 0%, #2a322d 20%, #2a322d 80%, transparent 100%) !important; }
+      .divider-dot   { background-color: #151a17 !important; color: #3a403b !important; }
+      .footer-note   { color: #5a6056 !important; }
+      .brand-footer  { color: #4a5046 !important; }
+      .feedback-text { color: #8a918b !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f0f1ec; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+<body class="body-bg" style="margin: 0; padding: 0; background-color: #f0f1ec; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
 
 <!-- Outer wrapper -->
-<div style="width: 100%; background-color: #f0f1ec; padding: 40px 0;">
+<div class="body-bg" style="width: 100%; background-color: #f0f1ec; padding: 40px 0;">
 <div style="max-width: 460px; margin: 0 auto; padding: 0 12px;">
 
-  <!-- Terracotta accent line -->
+  <!-- Top accent line -->
   <div style="height: 4px; background: linear-gradient(90deg, #e07a5f 0%, #3d9150 50%, #275c35 100%); border-radius: 4px 4px 0 0; margin: 0 20px;"></div>
 
   <!-- Main container -->
-  <div style="background: #ffffff; border-radius: 0 0 20px 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(30,45,61,0.07), 0 1px 3px rgba(30,45,61,0.04);">
+  <div class="main-card" style="background: #ffffff; border-radius: 0 0 20px 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(30,45,61,0.07), 0 1px 3px rgba(30,45,61,0.04);">
 
     <!-- Header -->
     <div style="background: linear-gradient(160deg, #3d9150 0%, #2d6e3c 60%, #1c3c24 100%); padding: 48px 36px 44px; position: relative;">
-      <!-- Decorative circles -->
+      <!-- Decorative CSS circles (render in every client) -->
       <div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.04);"></div>
       <div style="position: absolute; bottom: -20px; left: -20px; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.03);"></div>
-
-      <!-- Botanical doodle -->
-      <svg style="position: absolute; right: 16px; top: 20px; opacity: 0.12;" width="120" height="140" viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Main stem -->
-        <path d="M60 135 C60 110, 58 80, 60 10" stroke="white" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-        <!-- Left leaves -->
-        <path d="M58 100 C40 95, 22 85, 16 70 C28 72, 44 82, 58 100Z" stroke="white" stroke-width="1.2" fill="rgba(255,255,255,0.06)" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M57 70 C38 62, 24 48, 20 34 C32 38, 46 52, 57 70Z" stroke="white" stroke-width="1.2" fill="rgba(255,255,255,0.06)" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M58 42 C46 32, 38 20, 38 8 C46 12, 52 26, 58 42Z" stroke="white" stroke-width="1.2" fill="rgba(255,255,255,0.06)" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Right leaves -->
-        <path d="M62 85 C80 78, 94 65, 98 50 C86 54, 74 68, 62 85Z" stroke="white" stroke-width="1.2" fill="rgba(255,255,255,0.06)" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M61 55 C78 46, 90 32, 92 18 C82 24, 72 40, 61 55Z" stroke="white" stroke-width="1.2" fill="rgba(255,255,255,0.06)" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Leaf veins -->
-        <path d="M58 100 C46 90, 34 80, 28 72" stroke="white" stroke-width="0.6" fill="none" stroke-linecap="round" opacity="0.5"/>
-        <path d="M62 85 C74 76, 84 66, 88 56" stroke="white" stroke-width="0.6" fill="none" stroke-linecap="round" opacity="0.5"/>
-        <path d="M57 70 C46 60, 36 48, 30 40" stroke="white" stroke-width="0.6" fill="none" stroke-linecap="round" opacity="0.5"/>
-        <path d="M61 55 C72 46, 82 36, 86 26" stroke="white" stroke-width="0.6" fill="none" stroke-linecap="round" opacity="0.5"/>
-      </svg>
+      <div style="position: absolute; top: 60px; right: 40px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.03);"></div>
 
       <!-- Brand -->
-      <div style="margin-bottom: 24px;">
+      <div style="margin-bottom: 24px; position: relative;">
         <span style="font-family: 'Crimson Pro', Georgia, serif; font-size: 22px; font-weight: 600; color: rgba(255,255,255,0.9); letter-spacing: -0.02em;">Vithos</span>
       </div>
 
       <!-- Hero text -->
-      <h1 style="font-family: 'Crimson Pro', Georgia, serif; font-size: 32px; font-weight: 700; color: #ffffff; margin: 0 0 10px; letter-spacing: -0.03em; line-height: 1.1;">
-        What's new in v2.5
+      <h1 style="font-family: 'Crimson Pro', Georgia, serif; font-size: 32px; font-weight: 700; color: #ffffff; margin: 0 0 10px; letter-spacing: -0.03em; line-height: 1.1; position: relative;">
+        What's new in v2.6
       </h1>
-      <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); margin: 0; line-height: 1.5; letter-spacing: -0.01em;">
-        Email notifications are here.
+      <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; color: rgba(255,255,255,0.75); margin: 0; line-height: 1.5; letter-spacing: -0.01em; position: relative;">
+        Your chats, saved and redesigned.
       </p>
     </div>
 
     <!-- Body content -->
     <div style="padding: 36px 36px 20px;">
 
-      <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; color: #4a5568; line-height: 1.6; margin: 0 0 8px; letter-spacing: -0.01em;">
+      <p class="intro-text" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; color: #4a5568; line-height: 1.6; margin: 0 0 8px; letter-spacing: -0.01em;">
         Hi {{userName}},
       </p>
-      <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; color: #4a5568; line-height: 1.6; margin: 0 0 28px; letter-spacing: -0.01em;">
-        We just shipped Vithos v2.5 with a feature you'll love &mdash; email notifications are now live. Here's what changed:
+      <p class="intro-text" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; color: #4a5568; line-height: 1.6; margin: 0 0 28px; letter-spacing: -0.01em;">
+        Vithos v2.6 brings a big upgrade to the Health Assistant &mdash; your conversations are now saved, and the whole chat experience got a refresh. Here's what's new:
       </p>
 
-      <!-- Feature card: Report ready notifications -->
-      <div style="background: #f7f8f5; border: 1px solid #E5E7E0; border-radius: 14px; padding: 20px 22px; margin: 0 0 16px;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td style="vertical-align: top; width: 36px; padding-right: 14px;">
-              <div style="width: 36px; height: 36px; background: #f0f7f1; border-radius: 10px; text-align: center; line-height: 36px; font-size: 18px;">
-                &#9993;
-              </div>
-            </td>
-            <td style="vertical-align: top;">
-              <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 14px; font-weight: 700; color: #1E2D3D; margin: 0 0 4px; letter-spacing: -0.01em;">Report-ready notifications</p>
-              <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; margin: 0; line-height: 1.5;">
-                Get an email the moment your uploaded report is processed &mdash; biomarker count, date, and a direct link to your results.
-              </p>
-            </td>
-          </tr>
-        </table>
+      <!-- Feature card 1: Persistence -->
+      <div class="card" style="background: #f7f8f5; border: 1px solid #E5E7E0; border-radius: 14px; padding: 22px 22px; margin: 0 0 14px; border-left: 3px solid #3d9150;">
+        <span class="tag-sage" style="display: inline-block; font-family: 'Nunito', -apple-system, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #3d9150; background: #e6f1e9; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; margin: 0 0 12px;">Persistence</span>
+        <p class="card-title" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; font-weight: 700; color: #1E2D3D; margin: 0 0 6px; letter-spacing: -0.01em;">Chats that stick around</p>
+        <p class="card-body" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; margin: 0; line-height: 1.55;">
+          Every conversation is now saved automatically. Close the tab, come back a week later, pick up right where you left off &mdash; full history intact.
+        </p>
       </div>
 
-      <!-- Feature card: Toggle control -->
-      <div style="background: #f7f8f5; border: 1px solid #E5E7E0; border-radius: 14px; padding: 20px 22px; margin: 0 0 16px;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td style="vertical-align: top; width: 36px; padding-right: 14px;">
-              <div style="width: 36px; height: 36px; background: #f0f7f1; border-radius: 10px; text-align: center; line-height: 36px; font-size: 18px;">
-                &#9881;
-              </div>
-            </td>
-            <td style="vertical-align: top;">
-              <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 14px; font-weight: 700; color: #1E2D3D; margin: 0 0 4px; letter-spacing: -0.01em;">You're in control</p>
-              <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; margin: 0; line-height: 1.5;">
-                Toggle email notifications on or off anytime from your profile settings. It's enabled by default &mdash; turn it off if you prefer.
-              </p>
-            </td>
-          </tr>
-        </table>
+      <!-- Feature card 2: Sessions -->
+      <div class="card" style="background: #f7f8f5; border: 1px solid #E5E7E0; border-radius: 14px; padding: 22px 22px; margin: 0 0 14px; border-left: 3px solid #3d9150;">
+        <span class="tag-sage" style="display: inline-block; font-family: 'Nunito', -apple-system, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #3d9150; background: #e6f1e9; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; margin: 0 0 12px;">Sessions</span>
+        <p class="card-title" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; font-weight: 700; color: #1E2D3D; margin: 0 0 6px; letter-spacing: -0.01em;">Organised by the person you care about</p>
+        <p class="card-body" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; margin: 0; line-height: 1.55;">
+          Each profile has its own chat history, grouped by Today, Yesterday and This week. Start a new chat with one tap, delete old ones, switch between threads without losing context.
+        </p>
       </div>
 
-      <!-- Feature card: More to come -->
-      <div style="background: #f7f8f5; border: 1px solid #E5E7E0; border-radius: 14px; padding: 20px 22px; margin: 0 0 28px;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td style="vertical-align: top; width: 36px; padding-right: 14px;">
-              <div style="width: 36px; height: 36px; background: #f0f7f1; border-radius: 10px; text-align: center; line-height: 36px; font-size: 18px;">
-                &#10024;
-              </div>
-            </td>
-            <td style="vertical-align: top;">
-              <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 14px; font-weight: 700; color: #1E2D3D; margin: 0 0 4px; letter-spacing: -0.01em;">More on the way</p>
-              <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; margin: 0; line-height: 1.5;">
-                Monthly health digests and trend alerts are coming soon. Stay tuned.
-              </p>
-            </td>
-          </tr>
-        </table>
+      <!-- Feature card 3: Mobile / UI -->
+      <div class="card" style="background: #f7f8f5; border: 1px solid #E5E7E0; border-radius: 14px; padding: 22px 22px; margin: 0 0 14px; border-left: 3px solid #e07a5f;">
+        <span class="tag-terra" style="display: inline-block; font-family: 'Nunito', -apple-system, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #b9553b; background: #fbe8e2; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; margin: 0 0 12px;">Interface</span>
+        <p class="card-title" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; font-weight: 700; color: #1E2D3D; margin: 0 0 6px; letter-spacing: -0.01em;">A cleaner, faster chat</p>
+        <p class="card-body" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; margin: 0; line-height: 1.55;">
+          New pill-shaped input with the send button tucked in. On phones, pull out a side drawer to browse conversations. Assistant replies are tighter now &mdash; to the point, with values and dates cited from your reports.
+        </p>
+      </div>
+
+      <!-- Feature card 4: What's next -->
+      <div class="card" style="background: #f7f8f5; border: 1px solid #E5E7E0; border-radius: 14px; padding: 22px 22px; margin: 0 0 28px; border-left: 3px solid #e07a5f;">
+        <span class="tag-terra" style="display: inline-block; font-family: 'Nunito', -apple-system, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #b9553b; background: #fbe8e2; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; margin: 0 0 12px;">Roadmap</span>
+        <p class="card-title" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 15px; font-weight: 700; color: #1E2D3D; margin: 0 0 6px; letter-spacing: -0.01em;">What's next</p>
+        <p class="card-body" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; margin: 0; line-height: 1.55;">
+          Conversation memory (so the assistant remembers earlier turns in the same thread) and auto-generated chat titles are up next. Monthly digests still on the roadmap.
+        </p>
       </div>
 
       <!-- CTA Button -->
@@ -135,11 +120,11 @@
 
       <!-- Divider -->
       <div style="text-align: center; margin: 0 0 24px; position: relative;">
-        <div style="height: 1px; background: linear-gradient(90deg, transparent 0%, #E5E7E0 20%, #E5E7E0 80%, transparent 100%);"></div>
-        <div style="display: inline-block; background: #ffffff; padding: 0 12px; position: relative; top: -10px; font-size: 14px; color: #d1d5c8;">&#9679;</div>
+        <div class="divider-line" style="height: 1px; background-image: linear-gradient(90deg, transparent 0%, #E5E7E0 20%, #E5E7E0 80%, transparent 100%);"></div>
+        <div class="divider-dot" style="display: inline-block; background: #ffffff; padding: 0 12px; position: relative; top: -10px; font-size: 14px; color: #d1d5c8;">&bull;</div>
       </div>
 
-      <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; line-height: 1.6; margin: 0; text-align: center; letter-spacing: -0.01em;">
+      <p class="feedback-text" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 13px; color: #6B7280; line-height: 1.6; margin: 0; text-align: center; letter-spacing: -0.01em;">
         Have feedback? Reply to this email &mdash; we read every message.
       </p>
     </div>
@@ -149,7 +134,7 @@
 
     <!-- Footer inside card -->
     <div style="padding: 20px 36px 28px;">
-      <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 11px; color: #b0b5a9; line-height: 1.6; margin: 0; text-align: center;">
+      <p class="footer-note" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 11px; color: #b0b5a9; line-height: 1.6; margin: 0; text-align: center;">
         You received this because you have a Vithos account. This is a one-time product update.
       </p>
     </div>
@@ -158,7 +143,7 @@
 
   <!-- External footer -->
   <div style="padding: 24px 20px 0; text-align: center;">
-    <p style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 11px; color: #a3a89d; margin: 0; line-height: 1.6;">
+    <p class="brand-footer" style="font-family: 'Nunito', -apple-system, sans-serif; font-size: 11px; color: #a3a89d; margin: 0; line-height: 1.6;">
       Vithos &mdash; Your Health Companion
     </p>
   </div>
