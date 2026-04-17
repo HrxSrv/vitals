@@ -141,6 +141,15 @@
   .animate-delay-200 { animation-delay: 200ms; }
   .animate-delay-300 { animation-delay: 300ms; }
   .animate-delay-400 { animation-delay: 400ms; }
+
+  /* Hide scrollbars while keeping content scrollable */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
   
   /* Apple-inspired typography - tight line-heights for headlines */
   .leading-tight-display { line-height: 1.07; }

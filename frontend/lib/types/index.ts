@@ -124,6 +124,25 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  isPartial?: boolean;
+}
+
+export interface ChatSession {
+  id: string;
+  profileId: string;
+  title: string;
+  createdAt: string;
+  lastMessageAt: string;
+}
+
+export interface ChatMessageRecord {
+  id: string;
+  sessionId: string;
+  profileId: string;
+  role: MessageRole;
+  content: string;
+  isPartial: boolean;
+  createdAt: string;
 }
 
 // ─── API Responses ───────────────────────────────────────────────────────────

@@ -114,6 +114,32 @@ export interface ReportEmbedding {
   createdAt: Date;
 }
 
+export type ChatMessageRole = 'user' | 'assistant';
+
+export interface ChatSession {
+  id: string;
+  userId: string;
+  profileId: string;
+  title: string;
+  createdAt: Date;
+  lastMessageAt: Date;
+}
+
+export interface ChatMessageRecord {
+  id: string;
+  sessionId: string;
+  userId: string;
+  profileId: string;
+  role: ChatMessageRole;
+  content: string;
+  isPartial: boolean;
+  createdAt: Date;
+}
+
+export interface ChatSessionWithMessages extends ChatSession {
+  messages: ChatMessageRecord[];
+}
+
 export type DigestFrequency = 'monthly' | 'quarterly';
 
 export interface NotificationPreferences {

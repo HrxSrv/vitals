@@ -115,6 +115,89 @@ export type Database = {
           },
         ];
       };
+      chat_sessions: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          last_message_at: string | null;
+          profile_id: string;
+          title: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          last_message_at?: string | null;
+          profile_id: string;
+          title?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          last_message_at?: string | null;
+          profile_id?: string;
+          title?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'chat_sessions_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      chat_messages: {
+        Row: {
+          content: string;
+          created_at: string | null;
+          id: string;
+          is_partial: boolean;
+          profile_id: string;
+          role: string;
+          session_id: string;
+          user_id: string;
+        };
+        Insert: {
+          content: string;
+          created_at?: string | null;
+          id?: string;
+          is_partial?: boolean;
+          profile_id: string;
+          role: string;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          content?: string;
+          created_at?: string | null;
+          id?: string;
+          is_partial?: boolean;
+          profile_id?: string;
+          role?: string;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'chat_messages_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'chat_sessions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'chat_messages_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       lhm_history: {
         Row: {
           created_at: string | null;

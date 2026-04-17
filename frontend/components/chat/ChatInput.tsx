@@ -38,8 +38,17 @@ export function ChatInput({ onSend, disabled, placeholder = 'Ask about your heal
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   };
 
+  const canSend = !!value.trim() && !disabled;
+
   return (
-    <div className="flex items-end gap-3 bg-white border-t border-border px-4 py-3">
+    <div
+      className={cn(
+        'flex items-end gap-1.5 bg-white border border-border rounded-3xl pl-4 pr-1.5 py-1.5',
+        'shadow-sm transition-all duration-200',
+        'focus-within:border-primary-400 focus-within:shadow-md',
+        disabled && 'opacity-60'
+      )}
+    >
       <textarea
         ref={textareaRef}
         rows={1}
@@ -50,23 +59,24 @@ export function ChatInput({ onSend, disabled, placeholder = 'Ask about your heal
         disabled={disabled}
         placeholder={placeholder}
         className={cn(
-          'flex-1 resize-none rounded-2xl border border-border bg-muted px-4 py-2.5 text-sm text-foreground',
-          'placeholder:text-muted-foreground focus:outline-none focus:border-primary-400 focus:bg-white',
-          'transition-all duration-200 min-h-[42px] max-h-[120px]',
-          disabled && 'opacity-60 cursor-not-allowed'
+          'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground',
+          'focus:outline-none py-2 leading-relaxed',
+          'min-h-[24px] max-h-[120px]',
+          disabled && 'cursor-not-allowed'
         )}
       />
       <button
         onClick={handleSend}
-        disabled={!value.trim() || disabled}
+        disabled={!canSend}
+        aria-label="Send message"
         className={cn(
-          'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0',
-          value.trim() && !disabled
+          'shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200',
+          canSend
             ? 'bg-primary-500 hover:bg-primary-600 text-white active:scale-95'
             : 'bg-muted text-muted-foreground cursor-not-allowed'
         )}
       >
-        <Send size={16} strokeWidth={2.5} />
+        <Send size={15} strokeWidth={2.5} />
       </button>
     </div>
   );

@@ -7,11 +7,12 @@ import { cn } from '@/lib/utils/cn';
 interface HeaderProps {
   title?: string;
   showBack?: boolean;
+  leftAction?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
 }
 
-export function Header({ title, showBack, actions, className }: HeaderProps) {
+export function Header({ title, showBack, leftAction, actions, className }: HeaderProps) {
   const router = useRouter();
 
   return (
@@ -25,6 +26,8 @@ export function Header({ title, showBack, actions, className }: HeaderProps) {
           <ArrowLeft size={20} strokeWidth={2} />
         </button>
       )}
+
+      {leftAction}
 
       {title && (
         <h1 className="flex-1 font-display text-xl font-semibold text-foreground">

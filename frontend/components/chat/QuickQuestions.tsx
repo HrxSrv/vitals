@@ -9,7 +9,7 @@ interface QuickQuestionsProps {
 
 export function QuickQuestions({ onSelect, disabled }: QuickQuestionsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide no-scrollbar">
+    <div className="flex gap-2 overflow-x-auto px-4 py-1.5 scrollbar-hide">
       {QUICK_QUESTIONS.map((q) => (
         <button
           key={q}
