@@ -29,6 +29,7 @@ export const createProfileSchema = z.object({
   dob: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)')
+    .or(z.literal(''))
     .optional()
     .nullable(),
   gender: genderSchema.optional().nullable(),
@@ -46,6 +47,7 @@ export const updateProfileSchema = z.object({
   dob: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)')
+    .or(z.literal(''))
     .optional()
     .nullable(),
   gender: genderSchema.optional().nullable(),
