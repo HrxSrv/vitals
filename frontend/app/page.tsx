@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Leaf, TrendingUp, MessageCircle, ArrowRight, Users, PlayCircle } from 'lucide-react';
+import { Leaf, TrendingUp, MessageCircle, ArrowRight, Users, PlayCircle, Linkedin, Globe } from 'lucide-react';
 import { LandingRedirect } from '@/components/landing/LandingRedirect';
 import { HeroBanner } from '@/components/landing/HeroBanner';
 
@@ -139,6 +139,32 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Team */}
+      <section className="border-t border-border bg-white">
+        <div className="max-w-6xl mx-auto px-6 py-14">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+            <TeamMember
+              name="Aditya Ghai"
+              role="Developer"
+              linkedin="https://www.linkedin.com/in/aditya-ghai/"
+              github="https://github.com/adityaghai07"
+            />
+            <TeamMember
+              name="Harshit Srivastava"
+              role="Developer"
+              linkedin="https://www.linkedin.com/in/harshitsrv/"
+              github="https://github.com/HrxSrv"
+            />
+            <TeamMember
+              name="Abhyuday Deshpande"
+              role="Product Design"
+              linkedin="https://www.linkedin.com/in/abhyuday-deshpande/"
+              portfolio="https://abhyuday-ux.framer.website/"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-border mt-auto">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -157,6 +183,62 @@ export default function LandingPage() {
         </div>
       </footer>
 
+    </div>
+  );
+}
+
+function TeamMember({
+  name,
+  role,
+  linkedin,
+  github,
+  portfolio,
+}: {
+  name: string;
+  role: string;
+  linkedin: string;
+  github?: string;
+  portfolio?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center text-center gap-1.5">
+      <h3 className="text-sm font-semibold text-foreground">{name}</h3>
+      <p className="text-xs text-muted-foreground">{role}</p>
+      <div className="flex items-center gap-3 mt-1.5">
+        <a
+          href={linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${name} on LinkedIn`}
+          className="text-muted-foreground hover:text-primary-600 transition-colors"
+        >
+          <Linkedin size={16} />
+        </a>
+        {github && (
+          <a
+            href={github}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${name} on GitHub`}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5C5.73.5.67 5.56.67 11.83c0 5.01 3.24 9.26 7.74 10.76.57.1.78-.25.78-.55 0-.27-.01-1.17-.02-2.13-3.15.69-3.82-1.34-3.82-1.34-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.51-.29-5.16-1.26-5.16-5.59 0-1.23.44-2.24 1.17-3.03-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.16a10.88 10.88 0 0 1 5.72 0c2.18-1.47 3.14-1.16 3.14-1.16.63 1.57.23 2.73.11 3.02.73.79 1.17 1.8 1.17 3.03 0 4.34-2.65 5.3-5.18 5.58.41.35.77 1.05.77 2.12 0 1.53-.01 2.77-.01 3.15 0 .3.2.66.79.55 4.5-1.5 7.74-5.75 7.74-10.76C23.33 5.56 18.27.5 12 .5Z"/>
+            </svg>
+          </a>
+        )}
+        {portfolio && (
+          <a
+            href={portfolio}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${name} portfolio`}
+            className="text-muted-foreground hover:text-primary-600 transition-colors"
+          >
+            <Globe size={16} />
+          </a>
+        )}
+      </div>
     </div>
   );
 }
