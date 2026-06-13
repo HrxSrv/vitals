@@ -148,4 +148,16 @@ export interface NotificationPreferences {
   digestFrequency: DigestFrequency;
   lastSentAt?: Date;
   reportReadyEmailEnabled: boolean;
+  pushNotificationsEnabled: boolean;
+}
+
+export type DevicePlatform = 'ios' | 'android';
+
+export interface DeviceToken {
+  id: string;
+  userId: string;
+  token: string;
+  platform: DevicePlatform;
+  createdAt: Date;
+  updatedAt: Date;
 }

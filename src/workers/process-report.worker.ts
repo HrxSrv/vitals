@@ -11,7 +11,9 @@ const ocrService =
     : mistralOCRService;
 import { biomarkerService } from '../services/biomarker.service';
 import { emailService } from '../services/email.service';
+import { pushService } from '../services/push.service';
 import { notificationRepository } from '../repositories/notification.repository';
+import profileRepository from '../repositories/profile.repository';
 import { queueService } from '../services/queue.service';
 import { dashboardService } from '../services/dashboard.service';
 import { supabaseAdmin } from '../services/supabase.service';
@@ -141,6 +143,18 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
           error: emailError instanceof Error ? emailError.message : emailError,
         });
       }
+    }
+
+    // Push notification — lets the mobile app surface "report ready" even when
+    // closed/backgrounded. Best-effort: pushService never throws.
+    if (notificationPreferences.pushNotificationsEnabled) {
+      const profile = await profileRepository.findById(profileId).catch(() => null);
+      const name = profile?.name;
+      await pushService.sendToUser(userId, {
+        title: 'Report ready',
+        body: name ? `${name}'s report has been analyzed` : 'Your report has been analyzed',
+        data: { type: 'report-ready', reportId, profileId },
+      });
     }
 
     await job.updateProgress(100);
