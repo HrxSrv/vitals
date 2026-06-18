@@ -48,6 +48,10 @@ export interface PatientContext {
   labName?: string;
   /** Date the sample was collected, if printed separately from the report date. */
   collectionDate?: Date;
+  /** Full name of the patient as printed on the report — used for cross-report identity validation. */
+  patientName?: string;
+  /** Patient date of birth as printed on the report — primary anchor for identity validation. */
+  patientDob?: Date;
 }
 
 export class BiomarkerService {
@@ -66,6 +70,8 @@ export class BiomarkerService {
     const prompt = `From the following medical lab report text, extract only the patient metadata listed below.
 Return ONLY valid JSON matching this exact structure (use null for any field you cannot find):
 {
+  "patientName": "full name as printed on the report" or null,
+  "patientDob": "YYYY-MM-DD" or null,
   "gender": "male" | "female" | null,
   "ageAtTest": integer or null,
   "labName": "string or null",
@@ -77,13 +83,17 @@ ${ocrMarkdown}`;
 
     try {
       const result = await getChatProvider().extractStructured<{
+        patientName?: string | null;
+        patientDob?: string | null;
         gender?: 'male' | 'female' | null;
         ageAtTest?: number | null;
         labName?: string | null;
         collectionDate?: string | null;
-      }>(prompt, ocrMarkdown, '{ gender?: string, ageAtTest?: number, labName?: string, collectionDate?: string }');
+      }>(prompt, ocrMarkdown, '{ patientName?: string, patientDob?: string, gender?: string, ageAtTest?: number, labName?: string, collectionDate?: string }');
 
       return {
+        patientName: result.patientName ?? undefined,
+        patientDob: result.patientDob ? new Date(result.patientDob) : undefined,
         gender: result.gender ?? undefined,
         ageAtTest: result.ageAtTest ?? undefined,
         labName: result.labName ?? undefined,

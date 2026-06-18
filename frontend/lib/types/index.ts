@@ -47,7 +47,7 @@ export interface ProfileFormData {
 
 // ─── Report ──────────────────────────────────────────────────────────────────
 
-export type ProcessingStatus = 'pending' | 'processing' | 'done' | 'failed';
+export type ProcessingStatus = 'pending' | 'processing' | 'done' | 'failed' | 'person_mismatch';
 
 export interface Report {
   id: string;
@@ -58,6 +58,8 @@ export interface Report {
   processingStatus: ProcessingStatus;
   uploadedAt: string;
   biomarkers?: BiomarkerWithStatus[];
+  patientName?: string;
+  patientDob?: string;
 }
 
 // ─── Biomarker ───────────────────────────────────────────────────────────────

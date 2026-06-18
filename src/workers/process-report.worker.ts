@@ -4,6 +4,7 @@ import { reportRepository } from '../repositories/report.repository';
 import { storageService } from '../services/storage.service';
 import { mistralOCRService } from '../services/mistral-ocr.service';
 import { openAIOCRService } from '../services/openai-ocr.service';
+import { Report } from '../types/domain.types';
 
 const ocrService =
   (process.env.AI_PROVIDER ?? 'mistral').toLowerCase() === 'openai'
@@ -18,6 +19,31 @@ import { queueService } from '../services/queue.service';
 import { dashboardService } from '../services/dashboard.service';
 import { supabaseAdmin } from '../services/supabase.service';
 import { logger } from '../utils/logger';
+
+/**
+ * Returns true if the newly extracted patient context conflicts with the
+ * source-of-truth report for this profile.
+ *
+ * DOB is the primary anchor (reliable, stable). Name is the fallback.
+ * If neither field is available on both sides we cannot determine a mismatch,
+ * so we allow the upload through.
+ */
+function isPersonMismatch(extracted: { patientName?: string; patientDob?: Date }, source: Report): boolean {
+  const toDateStr = (d?: Date) => d?.toISOString().split('T')[0];
+  const extractedDob = toDateStr(extracted.patientDob);
+  const sourceDob = toDateStr(source.patientDob);
+
+  if (extractedDob && sourceDob) {
+    return extractedDob !== sourceDob;
+  }
+
+  if (extracted.patientName && source.patientName) {
+    const normalize = (s: string) => s.toLowerCase().replace(/[\s,.-]/g, '');
+    return normalize(extracted.patientName) !== normalize(source.patientName);
+  }
+
+  return false;
+}
 
 /**
  * Process Report Worker
@@ -108,7 +134,35 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
       gender: patientContext.gender,
       ageAtTest: patientContext.ageAtTest,
       labName: patientContext.labName,
+      patientName: pdfContext.patientName,
+      patientDob: pdfContext.patientDob,
     });
+
+    // Persist the patient identity fields extracted from the PDF
+    await reportRepository.updatePatientContext(
+      reportId,
+      pdfContext.patientName,
+      pdfContext.patientDob?.toISOString().split('T')[0],
+    );
+
+    // Step 5.6: Validate that this report belongs to the same person as existing reports.
+    // The oldest successfully processed report in the profile is the source of truth.
+    // If the person extracted from this PDF doesn't match, halt processing and surface
+    // a specific status so the frontend can prompt the user.
+    const sourceReport = await reportRepository.findOldestCompleted(profileId);
+    if (sourceReport && isPersonMismatch(pdfContext, sourceReport)) {
+      logger.warn('Person mismatch detected — report belongs to a different person', {
+        reportId,
+        profileId,
+        extractedName: pdfContext.patientName,
+        extractedDob: pdfContext.patientDob,
+        sourceName: sourceReport.patientName,
+        sourceDob: sourceReport.patientDob,
+      });
+      await reportRepository.updateStatus(reportId, 'person_mismatch');
+      dashboardService.invalidateCache(profileId);
+      return;
+    }
 
     // Step 6: Extract biomarkers and store them (two-pass: patient context → biomarkers)
     const { biomarkers, reportDate: extractedDate } = await biomarkerService.extractAndStore(

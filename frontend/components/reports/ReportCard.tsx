@@ -10,10 +10,11 @@ import { PdfViewerModal } from './PdfViewerModal';
 import type { Report, ProcessingStatus } from '@/lib/types';
 
 const STATUS_CONFIG: Record<ProcessingStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  pending:    { label: 'Pending',    color: 'bg-gray-100  text-gray-600',   icon: <Clock size={12} /> },
-  processing: { label: 'Processing', color: 'bg-blue-50   text-blue-600',   icon: <Loader2 size={12} className="animate-spin" /> },
-  done:       { label: 'Ready',      color: 'bg-primary-50 text-primary-700', icon: <CheckCircle2 size={12} /> },
-  failed:     { label: 'Failed',     color: 'bg-accent-50 text-accent-600', icon: <AlertTriangle size={12} /> },
+  pending:        { label: 'Pending',      color: 'bg-gray-100   text-gray-600',    icon: <Clock size={12} /> },
+  processing:     { label: 'Processing',   color: 'bg-blue-50    text-blue-600',    icon: <Loader2 size={12} className="animate-spin" /> },
+  done:           { label: 'Ready',        color: 'bg-primary-50 text-primary-700', icon: <CheckCircle2 size={12} /> },
+  failed:         { label: 'Failed',       color: 'bg-accent-50  text-accent-600',  icon: <AlertTriangle size={12} /> },
+  person_mismatch:{ label: 'Wrong person', color: 'bg-amber-50   text-amber-700',   icon: <AlertTriangle size={12} /> },
 };
 
 interface ReportCardProps {
