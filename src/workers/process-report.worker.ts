@@ -9,7 +9,7 @@ const ocrService =
   (process.env.AI_PROVIDER ?? 'mistral').toLowerCase() === 'openai'
     ? openAIOCRService
     : mistralOCRService;
-import { biomarkerService } from '../services/biomarker.service';
+import { biomarkerService, PatientContext } from '../services/biomarker.service';
 import { emailService } from '../services/email.service';
 import { pushService } from '../services/push.service';
 import { notificationRepository } from '../repositories/notification.repository';
@@ -70,13 +70,54 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
     logger.info('OCR markdown stored', { reportId });
     await job.updateProgress(60);
 
-    // Step 6: Extract biomarkers and store them
+    // Step 5.5: Build patient context for prompt enrichment.
+    // Run profile fetch and PDF-based context extraction in parallel — both are
+    // needed but neither depends on the other.
+    //
+    // Profile data (gender, age) is authoritative for who the report belongs to.
+    // PDF-extracted data (lab name, collection date) adds provenance the profile
+    // doesn't know. We merge them: profile wins for gender/age, PDF wins for lab
+    // metadata.
+    const [profile, pdfContext] = await Promise.all([
+      profileRepository.findById(profileId).catch(() => null),
+      biomarkerService.extractPatientContext(ocrMarkdown),
+    ]);
+
+    const reportDateForAge = report.reportDate ?? new Date();
+    const profileAge = profile?.dob
+      ? Math.floor(
+          (reportDateForAge.getTime() - new Date(profile.dob).getTime()) /
+            (365.25 * 24 * 60 * 60 * 1000)
+        )
+      : undefined;
+
+    const patientContext: PatientContext = {
+      // Profile is the source of truth for identity; fall back to PDF if unknown
+      gender:
+        profile?.gender === 'male' || profile?.gender === 'female'
+          ? profile.gender
+          : pdfContext.gender,
+      ageAtTest: profileAge ?? pdfContext.ageAtTest,
+      // Lab metadata only comes from the PDF
+      labName: pdfContext.labName,
+      collectionDate: pdfContext.collectionDate,
+    };
+
+    logger.info('Patient context built', {
+      reportId,
+      gender: patientContext.gender,
+      ageAtTest: patientContext.ageAtTest,
+      labName: patientContext.labName,
+    });
+
+    // Step 6: Extract biomarkers and store them (two-pass: patient context → biomarkers)
     const { biomarkers, reportDate: extractedDate } = await biomarkerService.extractAndStore(
       ocrMarkdown,
       reportId,
       userId,
       profileId,
-      report.reportDate
+      report.reportDate,
+      patientContext,
     );
     logger.info('Biomarkers extracted and stored', {
       reportId,
@@ -148,7 +189,6 @@ async function processReportJob(job: Job<ProcessReportJobData>): Promise<void> {
     // Push notification — lets the mobile app surface "report ready" even when
     // closed/backgrounded. Best-effort: pushService never throws.
     if (notificationPreferences.pushNotificationsEnabled) {
-      const profile = await profileRepository.findById(profileId).catch(() => null);
       const name = profile?.name;
       await pushService.sendToUser(userId, {
         title: 'Report ready',

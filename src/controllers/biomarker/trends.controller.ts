@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { biomarkerService } from '../../services/biomarker.service';
-import { biomarkerRepository } from '../../repositories/biomarker.repository';
+import { biomarkerService, pickRangeForGender } from '../../services/biomarker.service';
+import { biomarkerRepository, selectPrimary } from '../../repositories/biomarker.repository';
+import profileRepository from '../../repositories/profile.repository';
+import { GenderType } from '../../types/domain.types';
 
 /**
  * GET /api/biomarkers/trends?profileId=xxx
@@ -19,20 +21,25 @@ export async function getBiomarkerTrends(
       return;
     }
 
+    // Fetch profile for gender-aware range selection
+    const profile = await profileRepository.findById(profileId).catch(() => null);
+    const gender = (profile?.gender === 'male' || profile?.gender === 'female')
+      ? profile.gender as GenderType
+      : undefined;
+
     // Get all biomarkers with definitions
     const biomarkers = await biomarkerRepository.findByProfileWithDefinitions(profileId);
 
-    // Deduplicate: keep only one entry per (nameNormalized, reportId).
-    // A single CBC report can produce multiple sub-measurements that normalize
-    // to the same name (e.g. RBC by impedance + RBC by histogram both → rbc),
-    // which would create fake "multiple readings" from a single upload.
-    const seen = new Set<string>();
-    const deduplicated = biomarkers.filter((b) => {
+    // Group by (nameNormalized, reportId) and pick the primary method variant per group.
+    // Prevents a single CBC report with "RBC by impedance" + "RBC by histogram" from
+    // counting as two separate readings for trend purposes.
+    const reportGroups = new Map<string, typeof biomarkers>();
+    for (const b of biomarkers) {
       const key = `${b.nameNormalized}::${b.reportId}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+      if (!reportGroups.has(key)) reportGroups.set(key, []);
+      reportGroups.get(key)!.push(b);
+    }
+    const deduplicated = [...reportGroups.values()].map(selectPrimary);
 
     // Group by nameNormalized and filter those with 2+ readings
     const biomarkerGroups = deduplicated.reduce<Record<string, typeof deduplicated>>((acc, b) => {
@@ -54,18 +61,34 @@ export async function getBiomarkerTrends(
 
         const latest = sorted[sorted.length - 1];
         const definition = latest.definition;
+        // Use gender-specific range for the trend header display if available
+        const displayRange = definition ? pickRangeForGender(definition, gender) : {};
 
         return {
           nameNormalized,
           displayName: definition?.displayName || latest.name,
           category: definition?.category || latest.category,
           unit: definition?.unit || latest.unit,
-          refRangeLow: definition?.refRangeLow,
-          refRangeHigh: definition?.refRangeHigh,
+          refRangeLow:  displayRange.refRangeLow,
+          refRangeHigh: displayRange.refRangeHigh,
           history: sorted.map((b) => ({
             date: b.reportDate ? b.reportDate.toISOString() : new Date().toISOString(),
             value: b.value,
-            status: biomarkerService.calculateStatus(b.value, b.definition || undefined),
+            // Per-reading status: use per-lab range first, definition range as fallback
+            status: biomarkerService.calculateStatus(
+              b.value,
+              {
+                refRangeLow:  b.refRangeLow  ?? b.definition?.refRangeLow,
+                refRangeHigh: b.refRangeHigh ?? b.definition?.refRangeHigh,
+                refRangeLowM:  b.definition?.refRangeLowM,
+                refRangeHighM: b.definition?.refRangeHighM,
+                refRangeLowF:  b.definition?.refRangeLowF,
+                refRangeHighF: b.definition?.refRangeHighF,
+                criticalLow:  b.definition?.criticalLow,
+                criticalHigh: b.definition?.criticalHigh,
+              },
+              gender,
+            ),
           })),
         };
       });

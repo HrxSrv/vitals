@@ -11,17 +11,26 @@ export interface PdfChunk {
 }
 
 /**
- * Split a PDF buffer into chunks of `pagesPerChunk` pages.
- * Returns the original buffer as a single chunk if total pages <= pagesPerChunk.
+ * Split a PDF buffer into overlapping chunks of `pagesPerChunk` pages.
+ *
+ * Overlap ensures that a lab-report table spanning a page boundary is fully
+ * captured in at least one chunk — e.g. a header on page 3 and data rows on
+ * page 4 both appear in the chunk [3-5] when overlap = 1.
+ *
+ * Duplicate biomarkers that appear in two overlapping chunks are removed by
+ * the extraction-time dedup (same nameNormalized + same value).
+ *
+ * Returns the original buffer as a single chunk when total pages ≤ pagesPerChunk.
  */
 export async function splitPdf(
   pdfBuffer: Buffer,
   pagesPerChunk: number = 3,
+  pagesOverlap: number = 1,
 ): Promise<PdfChunk[]> {
   const srcDoc = await PDFDocument.load(pdfBuffer);
   const totalPages = srcDoc.getPageCount();
 
-  logger.info('Splitting PDF', { totalPages, pagesPerChunk });
+  logger.info('Splitting PDF', { totalPages, pagesPerChunk, pagesOverlap });
 
   // No splitting needed for short PDFs
   if (totalPages <= pagesPerChunk) {
@@ -33,8 +42,10 @@ export async function splitPdf(
   }
 
   const chunks: PdfChunk[] = [];
+  // Step forward by (pagesPerChunk - overlap) so adjacent chunks share `overlap` pages.
+  const step = Math.max(1, pagesPerChunk - pagesOverlap);
 
-  for (let start = 0; start < totalPages; start += pagesPerChunk) {
+  for (let start = 0; start < totalPages; start += step) {
     const end = Math.min(start + pagesPerChunk, totalPages);
     const pageIndices = Array.from({ length: end - start }, (_, i) => start + i);
 
@@ -49,11 +60,15 @@ export async function splitPdf(
       pages: pageIndices.map((i) => i + 1),
       buffer: Buffer.from(chunkBytes),
     });
+
+    // Stop once the last chunk reaches the final page
+    if (end === totalPages) break;
   }
 
   logger.info('PDF split complete', {
     totalPages,
     chunks: chunks.length,
+    overlap: pagesOverlap,
     chunkSizes: chunks.map((c) => `${c.pages.length}p/${Math.round(c.buffer.length / 1024)}KB`),
   });
 

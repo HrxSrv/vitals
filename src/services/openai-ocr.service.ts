@@ -6,6 +6,8 @@ import { ExternalServiceError } from '../utils/httpError';
 
 /** Max pages to send in a single API call */
 const PAGES_PER_CHUNK = parseInt(process.env.OCR_PAGES_PER_CHUNK ?? '3', 10);
+/** Pages shared between adjacent chunks to prevent cross-boundary misses */
+const PAGES_OVERLAP = parseInt(process.env.OCR_PAGES_OVERLAP ?? '1', 10);
 /** Max concurrent API calls */
 const OCR_CONCURRENCY = parseInt(process.env.OCR_CONCURRENCY ?? '3', 10);
 export class OpenAIOCRService {
@@ -42,8 +44,8 @@ export class OpenAIOCRService {
         sizeKb: Math.round(pdfBuffer.length / 1024),
       });
 
-      // Split into chunks (returns single chunk for short PDFs)
-      const chunks = await splitPdf(pdfBuffer, PAGES_PER_CHUNK);
+      // Split into overlapping chunks (returns single chunk for short PDFs)
+      const chunks = await splitPdf(pdfBuffer, PAGES_PER_CHUNK, PAGES_OVERLAP);
 
       if (chunks.length === 1) {
         // Short PDF — single call, no overhead
