@@ -12,6 +12,7 @@ import dashboardRoutes from '@routes/dashboard.routes';
 import biomarkerRoutes from '@routes/biomarker.routes';
 import chatRoutes from '@routes/chat.routes';
 import notificationRoutes from '@routes/notification.routes';
+import deviceRoutes from '@routes/device.routes';
 import contactRoutes from '@routes/contact.routes';
 import slotsRoutes from '@routes/slots.routes';
 import { cronManager } from './lib/cron';
@@ -106,6 +107,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/biomarkers', biomarkerRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/settings/notifications', notificationRoutes);
+app.use('/api/devices', deviceRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/slots', slotsRoutes);
 

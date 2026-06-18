@@ -19,12 +19,14 @@ export async function updateNotificationPreferences(
 ) {
   try {
     const userId = req.user!.id;
-    const { emailDigestEnabled, digestFrequency, reportReadyEmailEnabled } = req.body;
+    const { emailDigestEnabled, digestFrequency, reportReadyEmailEnabled, pushNotificationsEnabled } =
+      req.body;
 
     const preferences = await notificationService.updatePreferences(userId, {
       emailDigestEnabled,
       digestFrequency,
       reportReadyEmailEnabled,
+      pushNotificationsEnabled,
     });
 
     res.json({ preferences });
