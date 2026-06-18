@@ -56,6 +56,9 @@ export interface Biomarker {
   category?: string;
   value: number;
   unit: string;
+  /** Reference range extracted from this specific lab report — takes precedence over definition ranges. */
+  refRangeLow?: number;
+  refRangeHigh?: number;
   reportDate?: Date;
   createdAt: Date;
 }
@@ -65,11 +68,20 @@ export interface BiomarkerDefinition {
   displayName: string;
   category: string;
   unit: string;
+  /** Gender-neutral fallback range (used when gender is unknown). */
   refRangeLow?: number;
   refRangeHigh?: number;
+  /** Male-specific range — preferred over the gender-neutral range when patient is male. */
+  refRangeLowM?: number;
+  refRangeHighM?: number;
+  /** Female-specific range — preferred over the gender-neutral range when patient is female. */
+  refRangeLowF?: number;
+  refRangeHighF?: number;
   criticalLow?: number;
   criticalHigh?: number;
   description?: string;
+  /** 'canonical' = literature-seeded, never overwritten; 'extracted' = auto-created from OCR. */
+  rangeSource?: 'canonical' | 'extracted';
 }
 
 export interface BiomarkerWithDefinition extends Biomarker {
