@@ -232,4 +232,86 @@ export const BIOMARKER_OVERRIDES: Record<string, string> = {
   serum_folate:                'folate',
   serum_folic_acid:            'folate',
   vitamin_b9:                  'folate',
+
+  // ── hs-CRP ────────────────────────────────────────────────────────────────
+  // NOTE: hs_crp stays separate from crp (different assay, different range)
+  high_sensitivity_crp:              'hs_crp',
+  high_sensitivity_c_reactive_protein: 'hs_crp',
+  hs_c_reactive_protein:             'hs_crp',
+  hscrp:                             'hs_crp',
+
+  // ── Homocysteine ───────────────────────────────────────────────────────────
+  serum_homocysteine:          'homocysteine',
+  total_homocysteine:          'homocysteine',
+  hcy:                         'homocysteine',
+
+  // ── LDH ───────────────────────────────────────────────────────────────────
+  ldh:                         'ldh',
+  lactate_dehydrogenase:       'ldh',
+  lactic_dehydrogenase:        'ldh',
+  lactic_acid_dehydrogenase:   'ldh',
+
+  // ── Coagulation ───────────────────────────────────────────────────────────
+  serum_fibrinogen:            'fibrinogen',
+  plasma_fibrinogen:           'fibrinogen',
+  d_dimers:                    'd_dimer',
+  // NOTE: fdp (fibrin degradation products) is broader than d_dimer — do NOT merge
+
+  // ── Absolute CBC counts ────────────────────────────────────────────────────
+  // Distinct from percentage differentials (neutrophils %, lymphocytes %, etc.)
+  anc:                         'absolute_neutrophils',
+  absolute_neutrophil_count:   'absolute_neutrophils',
+  neutrophil_absolute:         'absolute_neutrophils',
+  alc:                         'absolute_lymphocytes',
+  absolute_lymphocyte_count:   'absolute_lymphocytes',
+  lymphocyte_absolute:         'absolute_lymphocytes',
+  amc:                         'absolute_monocytes',
+  absolute_monocyte_count:     'absolute_monocytes',
+  monocyte_absolute:           'absolute_monocytes',
+  aec:                         'absolute_eosinophils',
+  absolute_eosinophil_count:   'absolute_eosinophils',
+  eosinophil_absolute:         'absolute_eosinophils',
+  absolute_basophil_count:     'absolute_basophils',
+  basophil_absolute:           'absolute_basophils',
+
+  // ── Reticulocytes ─────────────────────────────────────────────────────────
+  reticulocyte_count:          'reticulocytes',
+  retics:                      'reticulocytes',
+  reticulocyte_percent:        'reticulocytes',
+
+  // ── Hormones ──────────────────────────────────────────────────────────────
+  total_testosterone:          'testosterone',
+  serum_testosterone:          'testosterone',
+  testosterone_total:          'testosterone',
+  serum_prolactin:             'prolactin',
+  prl:                         'prolactin',
+  serum_cortisol:              'cortisol',
+  morning_cortisol:            'cortisol',
+  am_cortisol:                 'cortisol',
+  hydrocortisone:              'cortisol',
+  prostate_specific_antigen:   'psa',
+  total_psa:                   'psa',
+  psa_total:                   'psa',
+
+  // ── Insulin / metabolic ───────────────────────────────────────────────────
+  fasting_insulin:             'insulin_fasting',
+  insulin:                     'insulin_fasting',  // most labs measure fasting insulin
+  serum_insulin:               'insulin_fasting',
+  connecting_peptide:          'c_peptide',
+  serum_c_peptide:             'c_peptide',
+
+  // ── Urine ACR ─────────────────────────────────────────────────────────────
+  uacr:                        'urine_albumin_creatinine_ratio',
+  acr:                         'urine_albumin_creatinine_ratio',
+  albumin_creatinine_ratio:    'urine_albumin_creatinine_ratio',
+  spot_urine_acr:              'urine_albumin_creatinine_ratio',
+
+  // ── Advanced lipids ───────────────────────────────────────────────────────
+  lipoprotein_a:               'lp_a',
+  lipoprotein_little_a:        'lp_a',
+  apolipoprotein_b:            'apob',
+  apo_b:                       'apob',
+  apolipoprotein_a1:           'apoa1',
+  apolipoprotein_a_1:          'apoa1',
+  apo_a1:                      'apoa1',
 };
