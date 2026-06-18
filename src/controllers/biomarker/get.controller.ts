@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { biomarkerService } from '@services/biomarker.service';
 import { HttpError } from '@utils/httpError';
+import profileRepository from '@repositories/profile.repository';
+import { GenderType } from '@/types/domain.types';
 
 /**
  * GET /api/biomarkers/trend
@@ -24,8 +26,13 @@ export async function getBiomarkerTrend(
       throw new HttpError(400, 'biomarker query parameter is required', 'VALIDATION_ERROR');
     }
 
-    // Get trend data
-    const trendData = await biomarkerService.getBiomarkerTrend(profileId, biomarkerName);
+    // Resolve profile gender for gender-aware range selection
+    const profile = await profileRepository.findById(profileId).catch(() => null);
+    const gender = (profile?.gender === 'male' || profile?.gender === 'female')
+      ? profile.gender as GenderType
+      : undefined;
+
+    const trendData = await biomarkerService.getBiomarkerTrend(profileId, biomarkerName, gender);
 
     res.json({
       biomarker: biomarkerName,
