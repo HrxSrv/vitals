@@ -208,6 +208,59 @@ export class ReportRepository {
   }
 
   /**
+   * Persist the patient name and DOB extracted from Pass 1 OCR.
+   * Used as the source of truth for cross-report identity validation.
+   */
+  async updatePatientContext(reportId: string, patientName?: string, patientDob?: string): Promise<void> {
+    try {
+      const { error } = await supabaseAdmin
+        .from('reports')
+        .update({
+          patient_name: patientName ?? null,
+          patient_dob: patientDob ?? null,
+        } as any)
+        .eq('id', reportId);
+
+      if (error) {
+        logger.error('Failed to update patient context:', error);
+        throw new HttpError(500, `Failed to update patient context: ${error.message}`, 'DB_ERROR');
+      }
+    } catch (error) {
+      if (error instanceof HttpError) throw error;
+      logger.error('Unexpected error updating patient context:', error);
+      throw new HttpError(500, 'Failed to update patient context', 'DB_ERROR');
+    }
+  }
+
+  /**
+   * Find the oldest successfully processed report for a profile.
+   * This is the source of truth for patient identity in that profile.
+   */
+  async findOldestCompleted(profileId: string): Promise<Report | null> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('reports')
+        .select('*')
+        .eq('profile_id', profileId)
+        .eq('processing_status', 'done')
+        .order('uploaded_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        logger.error('Failed to fetch oldest completed report:', error);
+        throw new HttpError(500, `Failed to fetch oldest completed report: ${error.message}`, 'DB_ERROR');
+      }
+
+      return data ? this.mapToReport(data) : null;
+    } catch (error) {
+      if (error instanceof HttpError) throw error;
+      logger.error('Unexpected error fetching oldest completed report:', error);
+      throw new HttpError(500, 'Failed to fetch oldest completed report', 'DB_ERROR');
+    }
+  }
+
+  /**
    * Delete a report
    * Note: Associated biomarkers and embeddings will be cascade deleted by database
    */
@@ -295,6 +348,8 @@ export class ReportRepository {
       rawOcrMarkdown: row.raw_ocr_markdown,
       processingStatus: row.processing_status as ReportStatus,
       uploadedAt: new Date(row.uploaded_at),
+      patientName: row.patient_name ?? undefined,
+      patientDob: row.patient_dob ? new Date(row.patient_dob) : undefined,
     };
   }
 }

@@ -33,7 +33,7 @@ export interface Profile {
   createdAt: Date;
 }
 
-export type ReportStatus = 'pending' | 'processing' | 'done' | 'failed';
+export type ReportStatus = 'pending' | 'processing' | 'done' | 'failed' | 'person_mismatch';
 
 export interface Report {
   id: string;
@@ -44,6 +44,8 @@ export interface Report {
   rawOcrMarkdown?: string;
   processingStatus: ReportStatus;
   uploadedAt: Date;
+  patientName?: string;
+  patientDob?: Date;
 }
 
 export interface Biomarker {

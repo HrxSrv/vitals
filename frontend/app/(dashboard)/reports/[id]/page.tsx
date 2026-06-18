@@ -49,6 +49,7 @@ export default function ReportDetailPage() {
   }
 
   const isProcessing = report.processingStatus === 'pending' || report.processingStatus === 'processing';
+  const isPersonMismatch = report.processingStatus === 'person_mismatch';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -84,6 +85,24 @@ export default function ReportDetailPage() {
             <div>
               <p className="text-sm font-semibold text-accent-700">Processing failed</p>
               <p className="text-xs text-accent-500 mt-0.5">We couldn't read this PDF. Try uploading again.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Person mismatch banner */}
+        {isPersonMismatch && (
+          <div className="mx-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+            <AlertTriangle size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Wrong person detected</p>
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                {report.patientName
+                  ? `This report appears to be for ${report.patientName}${report.patientDob ? ` (DOB: ${report.patientDob})` : ''}, which doesn't match the person in this profile's existing reports.`
+                  : "The person in this report doesn't match the existing reports in this profile."}
+              </p>
+              <p className="text-xs text-amber-600 mt-2 leading-relaxed">
+                Delete this report and re-upload it under a different profile, or create a new profile for this person.
+              </p>
             </div>
           </div>
         )}
