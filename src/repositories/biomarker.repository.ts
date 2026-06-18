@@ -350,9 +350,14 @@ export class BiomarkerRepository {
           unit,
           ref_range_low,
           ref_range_high,
+          ref_range_low_m,
+          ref_range_high_m,
+          ref_range_low_f,
+          ref_range_high_f,
           critical_low,
           critical_high,
-          description
+          description,
+          range_source
         )
       `
       )
