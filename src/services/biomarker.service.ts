@@ -140,6 +140,7 @@ Rules:
   - Different sample types are different tests: "Serum Albumin" → "albumin", "Urine Albumin" → "urine_albumin"
   - Different subtypes are different tests: "Total Bilirubin" → "total_bilirubin", "Direct Bilirubin" → "direct_bilirubin", "Indirect Bilirubin" → "indirect_bilirubin"
 - SKIP qualitative/non-numeric results entirely (e.g., "Present", "Absent", "Positive", "Negative", "+", "++", "Trace") — do NOT convert them to numbers
+- SKIP physical/macroscopic observations that are not measured analytes: colour, appearance, turbidity, odour, volume, reaction, deposit, transparency, consistency — these describe the sample, not a biochemical quantity
 - Convert numeric values to numbers (remove commas, handle ranges by taking the actual patient value)
 - "unit" must be the unit of the patient value exactly as shown (mg/dL, g/dL, %, /μL, etc.)
 - Extract reference ranges as raw numbers exactly as printed — do NOT convert or scale them
@@ -242,7 +243,7 @@ ${ocrMarkdown}`;
         nameNormalized,
         category,
         value: biomarker.value,
-        unit: biomarker.unit,
+        unit: biomarker.unit ?? '',
         reportDate,
         refRangeLow,
         refRangeHigh,
@@ -277,7 +278,7 @@ ${ocrMarkdown}`;
             nameNormalized: b.nameNormalized,
             displayName,
             category: b.category ?? 'other',
-            unit: b.unit,
+            unit: b.unit ?? '',
             refRangeLow: b.refRangeLow,
             refRangeHigh: b.refRangeHigh,
           });
@@ -298,7 +299,7 @@ ${ocrMarkdown}`;
             nameNormalized: b.nameNormalized,
             displayName: existing.displayName,
             category: existing.category ?? b.category ?? 'other',
-            unit: existing.unit ?? b.unit,
+            unit: existing.unit ?? b.unit ?? '',
             refRangeLow: b.refRangeLow,
             refRangeHigh: b.refRangeHigh,
           });

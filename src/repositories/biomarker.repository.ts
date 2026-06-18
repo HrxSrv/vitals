@@ -94,7 +94,7 @@ export class BiomarkerRepository {
           name_normalized: b.nameNormalized,
           category: b.category,
           value: b.value,
-          unit: b.unit,
+          unit: b.unit ?? '',
           report_date: b.reportDate?.toISOString().split('T')[0],
           ref_range_low: b.refRangeLow ?? null,
           ref_range_high: b.refRangeHigh ?? null,
