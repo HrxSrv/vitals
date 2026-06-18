@@ -3,7 +3,24 @@ import { biomarkerRepository } from '../repositories/biomarker.repository';
 import { biomarkerNormalizer } from '../utils/biomarker-normalizer';
 import { alignUnits, detectAndFixScaleMismatch } from '../utils/unit-normalizer';
 import { logger } from '../utils/logger';
-import { Biomarker, BiomarkerWithDefinition } from '../types/domain.types';
+import { Biomarker, BiomarkerDefinition, BiomarkerWithDefinition, GenderType } from '../types/domain.types';
+
+/**
+ * Pick the correct reference range bounds from a definition given the patient's gender.
+ * Gender-specific ranges (canonical) take precedence over the gender-neutral fallback.
+ */
+export function pickRangeForGender(
+  definition: Pick<BiomarkerDefinition, 'refRangeLow' | 'refRangeHigh' | 'refRangeLowM' | 'refRangeHighM' | 'refRangeLowF' | 'refRangeHighF'>,
+  gender?: GenderType,
+): { refRangeLow?: number; refRangeHigh?: number } {
+  if (gender === 'male' && (definition.refRangeLowM != null || definition.refRangeHighM != null)) {
+    return { refRangeLow: definition.refRangeLowM, refRangeHigh: definition.refRangeHighM };
+  }
+  if (gender === 'female' && (definition.refRangeLowF != null || definition.refRangeHighF != null)) {
+    return { refRangeLow: definition.refRangeLowF, refRangeHigh: definition.refRangeHighF };
+  }
+  return { refRangeLow: definition.refRangeLow, refRangeHigh: definition.refRangeHigh };
+}
 
 export interface ExtractedBiomarker {
   name: string;
@@ -21,16 +38,79 @@ export interface BiomarkerExtractionResult {
   reportDate?: Date;
 }
 
+/** Patient/report metadata extracted from OCR text in a lightweight first pass. */
+export interface PatientContext {
+  /** Patient sex as printed on the report — used to choose the correct gender-specific reference range column. */
+  gender?: 'male' | 'female';
+  /** Patient age at time of test, in whole years. */
+  ageAtTest?: number;
+  /** Name of the lab/diagnostic centre (for logging and provenance). */
+  labName?: string;
+  /** Date the sample was collected, if printed separately from the report date. */
+  collectionDate?: Date;
+}
+
 export class BiomarkerService {
   /**
    * Extract biomarkers from OCR markdown text using LLM
    * @param ocrMarkdown - Raw OCR markdown output from report
    * @returns Extracted biomarkers and report date
    */
-  async extractFromOCR(ocrMarkdown: string): Promise<BiomarkerExtractionResult> {
-    logger.info('Extracting biomarkers from OCR markdown');
+  /**
+   * Lightweight first-pass extraction: pull patient metadata from the OCR text
+   * without running the full (expensive) biomarker extraction prompt.
+   */
+  async extractPatientContext(ocrMarkdown: string): Promise<PatientContext> {
+    logger.info('Extracting patient context from OCR markdown');
+
+    const prompt = `From the following medical lab report text, extract only the patient metadata listed below.
+Return ONLY valid JSON matching this exact structure (use null for any field you cannot find):
+{
+  "gender": "male" | "female" | null,
+  "ageAtTest": integer or null,
+  "labName": "string or null",
+  "collectionDate": "YYYY-MM-DD" or null
+}
+
+Lab Report Text:
+${ocrMarkdown}`;
+
+    try {
+      const result = await getChatProvider().extractStructured<{
+        gender?: 'male' | 'female' | null;
+        ageAtTest?: number | null;
+        labName?: string | null;
+        collectionDate?: string | null;
+      }>(prompt, ocrMarkdown, '{ gender?: string, ageAtTest?: number, labName?: string, collectionDate?: string }');
+
+      return {
+        gender: result.gender ?? undefined,
+        ageAtTest: result.ageAtTest ?? undefined,
+        labName: result.labName ?? undefined,
+        collectionDate: result.collectionDate ? new Date(result.collectionDate) : undefined,
+      };
+    } catch (error) {
+      // Non-fatal: missing context just means we extract without it
+      logger.warn('Patient context extraction failed, proceeding without it', { error });
+      return {};
+    }
+  }
+
+  async extractFromOCR(ocrMarkdown: string, patientContext?: PatientContext): Promise<BiomarkerExtractionResult> {
+    logger.info('Extracting biomarkers from OCR markdown', {
+      hasPatientContext: !!patientContext,
+      labName: patientContext?.labName,
+    });
+
+    const contextBlock = patientContext && (patientContext.gender || patientContext.ageAtTest != null)
+      ? `\nPatient context (use when the report prints gender-specific or age-specific reference range columns — pick the column that matches):
+- Sex: ${patientContext.gender ?? 'unknown'}
+- Age at time of test: ${patientContext.ageAtTest != null ? `${patientContext.ageAtTest} years` : 'unknown'}
+- Lab: ${patientContext.labName ?? 'unknown'}\n`
+      : '';
 
     const prompt = `You are a medical lab report analyzer. Extract all biomarker values from the following lab report text.
+${contextBlock}
 
 Instructions:
 1. Extract ONLY biomarker names, values, units, and reference ranges
@@ -64,7 +144,8 @@ Rules:
 - "unit" must be the unit of the patient value exactly as shown (mg/dL, g/dL, %, /μL, etc.)
 - Extract reference ranges as raw numbers exactly as printed — do NOT convert or scale them
 - "refRangeUnit" must be the unit shown next to the reference range, exactly as written (e.g., "thousand/μL", "×10³/L", "lakhs/μL"). Set to null if the reference range unit is the same as the value unit
-- If a biomarker appears multiple times with different measurement methods, keep only the first numeric value
+- If a biomarker appears multiple times with DIFFERENT measurement methods (e.g. "RBC(Electrical Impedance)" and "RBC(RBC Histogram)"), extract EACH as a separate entry using the full original name — do NOT skip method variants
+- If a biomarker row is REPEATED with EXACTLY the same value (a lab summary section restating a result), extract it only once
 - Return ONLY valid JSON, no additional text
 
 Preferred canonical names (use these when applicable, invent new snake_case names for tests not listed):
@@ -89,7 +170,7 @@ ${ocrMarkdown}`;
       }>(
         prompt,
         ocrMarkdown,
-        '{ reportDate?: string, biomarkers: Array<{ name: string, nameNormalized: string, value: number, unit: string, category?: string, refRangeLow?: number, refRangeHigh?: number, refRangeUnit?: string }> }'
+        '{ reportDate?: string, biomarkers: Array<{ name: string, nameNormalized: string, value: number, unit: string, category?: string, refRangeLow?: number, refRangeHigh?: number, refRangeUnit?: string }> }',
       );
 
       logger.info('Biomarker extraction successful', {
@@ -168,13 +249,16 @@ ${ocrMarkdown}`;
       };
     });
 
-    // Deduplicate within this report — keep first occurrence of each nameNormalized.
-    // A single CBC can have multiple sub-measurements (e.g. RBC by impedance + laser)
-    // that normalize to the same canonical name; only store one per report.
-    const seenNames = new Set<string>();
+    // Deduplicate within this report: remove only when BOTH nameNormalized AND value are
+    // identical (a lab summary section repeating values already listed in detail rows).
+    // Different values under the same normalized name (e.g. RBC by impedance vs histogram)
+    // are distinct method-variant measurements and must be kept.
+    const seenKeys = new Set<string>();
     const uniqueBiomarkers = normalizedBiomarkers.filter((b) => {
-      if (seenNames.has(b.nameNormalized)) return false;
-      seenNames.add(b.nameNormalized);
+      // Round to 4 dp so 4.5000 and 4.5 don't produce false positives.
+      const key = `${b.nameNormalized}::${Number(b.value).toFixed(4)}`;
+      if (seenKeys.has(key)) return false;
+      seenKeys.add(key);
       return true;
     });
 
@@ -203,11 +287,13 @@ ${ocrMarkdown}`;
             displayName,
           });
         } else if (
-          existing.refRangeLow === undefined &&
-          existing.refRangeHigh === undefined &&
-          (b.refRangeLow !== undefined || b.refRangeHigh !== undefined)
+          existing.rangeSource !== 'canonical' &&
+          existing.refRangeLow == null &&
+          existing.refRangeHigh == null &&
+          (b.refRangeLow != null || b.refRangeHigh != null)
         ) {
-          // Backfill reference ranges if we now have them but didn't before
+          // Backfill ref ranges into an extracted definition that has none yet.
+          // Never update canonical definitions — their ranges come from medical literature.
           await biomarkerRepository.upsertDefinition({
             nameNormalized: b.nameNormalized,
             displayName: existing.displayName,
@@ -244,16 +330,24 @@ ${ocrMarkdown}`;
     reportId: string,
     userId: string,
     profileId: string,
-    userProvidedDate?: Date
+    userProvidedDate?: Date,
+    /** Caller-supplied patient context (profile gender/age + first-pass extraction). */
+    patientContext?: PatientContext,
   ): Promise<{ biomarkers: Biomarker[]; reportDate?: Date }> {
     logger.info('Extracting and storing biomarkers', {
       reportId,
       profileId,
       hasUserDate: !!userProvidedDate,
+      hasPatientContext: !!patientContext,
     });
 
-    // Extract biomarkers from OCR
-    const extraction = await this.extractFromOCR(ocrMarkdown);
+    // Pass 1 (if not supplied by caller): extract patient context for prompt enrichment.
+    // This is a cheap LLM call that extracts gender/age/lab so the main extraction
+    // can pick the correct gender-specific reference range column.
+    const context = patientContext ?? await this.extractPatientContext(ocrMarkdown);
+
+    // Pass 2: full biomarker extraction with patient context injected
+    const extraction = await this.extractFromOCR(ocrMarkdown, context);
 
     // Priority: user-provided date > extracted date > current date (upload date)
     const reportDate = userProvidedDate || extraction.reportDate || new Date();
@@ -343,15 +437,25 @@ ${ocrMarkdown}`;
     definition?: {
       refRangeLow?: number;
       refRangeHigh?: number;
+      refRangeLowM?: number;
+      refRangeHighM?: number;
+      refRangeLowF?: number;
+      refRangeHighF?: number;
       criticalLow?: number;
       criticalHigh?: number;
-    }
+    },
+    gender?: GenderType,
   ): 'normal' | 'high' | 'low' | 'borderline' {
     if (!definition) {
       return 'normal';
     }
 
-    const { refRangeLow, refRangeHigh, criticalLow, criticalHigh } = definition;
+    // Resolve gender-specific range when available; fall back to gender-neutral.
+    const { refRangeLow, refRangeHigh } = gender
+      ? pickRangeForGender(definition as BiomarkerDefinition, gender)
+      : { refRangeLow: definition.refRangeLow, refRangeHigh: definition.refRangeHigh };
+
+    const { criticalLow, criticalHigh } = definition;
 
     // Check critical ranges first
     if (criticalLow != null && value < criticalLow) {
@@ -388,9 +492,14 @@ ${ocrMarkdown}`;
     definition?: {
       refRangeLow?: number;
       refRangeHigh?: number;
+      refRangeLowM?: number;
+      refRangeHighM?: number;
+      refRangeLowF?: number;
+      refRangeHighF?: number;
       criticalLow?: number;
       criticalHigh?: number;
-    }
+    },
+    gender?: GenderType,
   ): 'improving' | 'worsening' | 'stable' | 'new' {
     // Need at least 2 values to calculate trend
     if (values.length < 2) {
@@ -401,9 +510,8 @@ ${ocrMarkdown}`;
     const previous = values[values.length - 2];
     const current = values[values.length - 1];
 
-    // Calculate statuses
-    const previousStatus = this.calculateStatus(previous.value, definition);
-    const currentStatus = this.calculateStatus(current.value, definition);
+    const previousStatus = this.calculateStatus(previous.value, definition, gender);
+    const currentStatus  = this.calculateStatus(current.value,  definition, gender);
 
     // If no reference ranges, use simple value comparison
     if (!definition || (!definition.refRangeLow && !definition.refRangeHigh)) {
@@ -468,7 +576,8 @@ ${ocrMarkdown}`;
    */
   async getBiomarkerTrend(
     profileId: string,
-    nameNormalized: string
+    nameNormalized: string,
+    gender?: GenderType,
   ): Promise<
     Array<{
       value: number;
@@ -493,29 +602,50 @@ ${ocrMarkdown}`;
       return [];
     }
 
-    // Calculate status for each value
+    // Build per-reading effective ranges: per-lab range (from this report) takes
+    // precedence over the definition table, which may reflect a different lab's values.
+    // When no per-lab range exists, fall back to gender-specific definition range.
     const trendData = history.map((biomarker) => {
-      const status = this.calculateStatus(biomarker.value, biomarker.definition);
+      const defRange = biomarker.definition
+        ? pickRangeForGender(biomarker.definition, gender)
+        : {};
+      const effectiveRange = {
+        refRangeLow:  biomarker.refRangeLow  ?? defRange.refRangeLow,
+        refRangeHigh: biomarker.refRangeHigh ?? defRange.refRangeHigh,
+        criticalLow:  biomarker.definition?.criticalLow,
+        criticalHigh: biomarker.definition?.criticalHigh,
+      };
+      const status = this.calculateStatus(biomarker.value, effectiveRange);
 
       return {
         value: biomarker.value,
         unit: biomarker.unit,
         reportDate: biomarker.reportDate,
         status,
-        refRangeLow: biomarker.definition?.refRangeLow,
-        refRangeHigh: biomarker.definition?.refRangeHigh,
+        // Return the ranges used for this reading so the client can draw the reference band
+        refRangeLow:  effectiveRange.refRangeLow,
+        refRangeHigh: effectiveRange.refRangeHigh,
       };
     });
 
-    // Calculate trend for each point (except the first one)
+    // Trend direction is always evaluated against the LATEST reading's effective ranges
+    // so all points are compared on the same basis.
+    const latest = history[history.length - 1];
+    const latestDefRange = latest.definition ? pickRangeForGender(latest.definition, gender) : {};
+    const latestEffectiveRange = {
+      refRangeLow:  latest.refRangeLow  ?? latestDefRange.refRangeLow,
+      refRangeHigh: latest.refRangeHigh ?? latestDefRange.refRangeHigh,
+      criticalLow:  latest.definition?.criticalLow,
+      criticalHigh: latest.definition?.criticalHigh,
+    };
+
     const trendDataWithTrend = trendData.map((point, index) => {
       if (index === 0) {
         return { ...point, trend: 'new' as const };
       }
 
-      // Get all values up to this point
       const valuesUpToNow = history.slice(0, index + 1);
-      const trend = this.calculateTrend(valuesUpToNow, history[0].definition);
+      const trend = this.calculateTrend(valuesUpToNow, latestEffectiveRange, gender);
 
       return { ...point, trend };
     });
