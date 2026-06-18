@@ -2,6 +2,30 @@ import { getSupabaseClient } from '../utils/supabase';
 import { Biomarker, BiomarkerDefinition, BiomarkerWithDefinition } from '../types/domain.types';
 import { logger } from '../utils/logger';
 
+// Keywords that indicate a measurement-method variant, not the primary result
+// (e.g. "RBC by impedance" vs plain "RBC").
+const METHOD_QUALIFIER_RE =
+  /\b(by|using|via|impedance|histogram|laser|optical|flow|coulter|cytometry)\b/i;
+
+/**
+ * When one report contains multiple rows for the same nameNormalized
+ * (e.g. "RBC by impedance" and "RBC by histogram"), pick the primary result:
+ * 1. Prefer the name with no method qualifier
+ * 2. Prefer the entry that carries a reference range
+ * 3. Stable tiebreak: first in array (insertion/fetch order)
+ */
+export function selectPrimary(candidates: BiomarkerWithDefinition[]): BiomarkerWithDefinition {
+  if (candidates.length === 1) return candidates[0];
+  return [...candidates].sort((a, b) => {
+    const aQ = METHOD_QUALIFIER_RE.test(a.name) ? 1 : 0;
+    const bQ = METHOD_QUALIFIER_RE.test(b.name) ? 1 : 0;
+    if (aQ !== bQ) return aQ - bQ;
+    const aR = a.definition?.refRangeLow != null || a.definition?.refRangeHigh != null ? 0 : 1;
+    const bR = b.definition?.refRangeLow != null || b.definition?.refRangeHigh != null ? 0 : 1;
+    return aR - bR;
+  })[0];
+}
+
 const supabase = getSupabaseClient();
 
 export interface CreateBiomarkerData {
@@ -199,11 +223,16 @@ export class BiomarkerRepository {
             // Prefer per-row ref ranges (unit-aligned) over definition ranges.
             // When per-row ranges exist, ignore definition criticals — they may
             // be in a different unit scale than the biomarker value.
-            refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
+            refRangeLow:  row.ref_range_low  ?? row.def_ref_range_low,
             refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
-            criticalLow: row.ref_range_low != null ? undefined : row.def_critical_low,
+            refRangeLowM:  row.def_ref_range_low_m  != null ? parseFloat(row.def_ref_range_low_m)  : undefined,
+            refRangeHighM: row.def_ref_range_high_m != null ? parseFloat(row.def_ref_range_high_m) : undefined,
+            refRangeLowF:  row.def_ref_range_low_f  != null ? parseFloat(row.def_ref_range_low_f)  : undefined,
+            refRangeHighF: row.def_ref_range_high_f != null ? parseFloat(row.def_ref_range_high_f) : undefined,
+            criticalLow:  row.ref_range_low != null ? undefined : row.def_critical_low,
             criticalHigh: row.ref_range_low != null ? undefined : row.def_critical_high,
             description: row.def_description,
+            rangeSource: row.def_range_source ?? undefined,
           }
         : undefined,
     }));
@@ -246,14 +275,16 @@ export class BiomarkerRepository {
             displayName: row.def_display_name,
             category: row.def_category,
             unit: row.def_unit,
-            // Prefer per-row ref ranges (unit-aligned) over definition ranges.
-            // When per-row ranges exist, ignore definition criticals — they may
-            // be in a different unit scale than the biomarker value.
-            refRangeLow: row.ref_range_low ?? row.def_ref_range_low,
+            refRangeLow:  row.ref_range_low  ?? row.def_ref_range_low,
             refRangeHigh: row.ref_range_high ?? row.def_ref_range_high,
-            criticalLow: row.ref_range_low != null ? undefined : row.def_critical_low,
+            refRangeLowM:  row.def_ref_range_low_m  != null ? parseFloat(row.def_ref_range_low_m)  : undefined,
+            refRangeHighM: row.def_ref_range_high_m != null ? parseFloat(row.def_ref_range_high_m) : undefined,
+            refRangeLowF:  row.def_ref_range_low_f  != null ? parseFloat(row.def_ref_range_low_f)  : undefined,
+            refRangeHighF: row.def_ref_range_high_f != null ? parseFloat(row.def_ref_range_high_f) : undefined,
+            criticalLow:  row.ref_range_low != null ? undefined : row.def_critical_low,
             criticalHigh: row.ref_range_low != null ? undefined : row.def_critical_high,
             description: row.def_description,
+            rangeSource: row.def_range_source ?? undefined,
           }
         : undefined,
     }));
@@ -268,15 +299,15 @@ export class BiomarkerRepository {
     // Get all biomarkers with definitions
     const biomarkers = await this.findByProfileWithDefinitions(profileId);
 
-    // Step 1: Deduplicate within each report — keep only one entry per (nameNormalized, reportId).
-    // A single CBC report can produce multiple sub-measurements that normalize to the same name.
-    const seenInReport = new Set<string>();
-    const deduplicated = biomarkers.filter((b) => {
+    // Step 1: Group by (nameNormalized, reportId) and pick the primary method variant
+    // per group so the dashboard shows one representative value per biomarker per report.
+    const reportGroups = new Map<string, BiomarkerWithDefinition[]>();
+    for (const b of biomarkers) {
       const key = `${b.nameNormalized}::${b.reportId}`;
-      if (seenInReport.has(key)) return false;
-      seenInReport.add(key);
-      return true;
-    });
+      if (!reportGroups.has(key)) reportGroups.set(key, []);
+      reportGroups.get(key)!.push(b);
+    }
+    const deduplicated = [...reportGroups.values()].map(selectPrimary);
 
     // Step 2: Group by normalized name and keep only the latest across reports
     const latestMap = new Map<string, BiomarkerWithDefinition>();
@@ -338,12 +369,28 @@ export class BiomarkerRepository {
       throw new Error(`Failed to find biomarker history: ${error.message}`);
     }
 
-    return data.map((row: Record<string, any>) => ({
+    const mapped = data.map((row: Record<string, any>) => ({
       ...this.mapToDomain(row),
       definition: row.biomarker_definitions
         ? this.mapDefinitionToDomain(row.biomarker_definitions)
         : undefined,
     }));
+
+    // Dedup by reportId: when one report has multiple method-variant rows for the
+    // same nameNormalized, keep only the primary one so each report contributes
+    // exactly one data point to the trend chart.
+    const byReport = new Map<string, BiomarkerWithDefinition[]>();
+    for (const b of mapped) {
+      if (!byReport.has(b.reportId)) byReport.set(b.reportId, []);
+      byReport.get(b.reportId)!.push(b);
+    }
+    const deduped = [...byReport.values()].map(selectPrimary);
+    // Re-sort ascending by date (grouping breaks original order).
+    return deduped.sort((a, b) => {
+      const dA = a.reportDate ? a.reportDate.getTime() : 0;
+      const dB = b.reportDate ? b.reportDate.getTime() : 0;
+      return dA - dB;
+    });
   }
 
   /**
@@ -465,6 +512,8 @@ export class BiomarkerRepository {
       category: row.category,
       value: parseFloat(row.value),
       unit: row.unit,
+      refRangeLow: row.ref_range_low != null ? parseFloat(row.ref_range_low) : undefined,
+      refRangeHigh: row.ref_range_high != null ? parseFloat(row.ref_range_high) : undefined,
       reportDate: row.report_date ? new Date(row.report_date) : undefined,
       createdAt: new Date(row.created_at),
     };
@@ -479,11 +528,16 @@ export class BiomarkerRepository {
       displayName: row.display_name,
       category: row.category,
       unit: row.unit,
-      refRangeLow: row.ref_range_low ? parseFloat(row.ref_range_low) : undefined,
-      refRangeHigh: row.ref_range_high ? parseFloat(row.ref_range_high) : undefined,
-      criticalLow: row.critical_low ? parseFloat(row.critical_low) : undefined,
-      criticalHigh: row.critical_high ? parseFloat(row.critical_high) : undefined,
+      refRangeLow:  row.ref_range_low   != null ? parseFloat(row.ref_range_low)   : undefined,
+      refRangeHigh: row.ref_range_high  != null ? parseFloat(row.ref_range_high)  : undefined,
+      refRangeLowM:  row.ref_range_low_m  != null ? parseFloat(row.ref_range_low_m)  : undefined,
+      refRangeHighM: row.ref_range_high_m != null ? parseFloat(row.ref_range_high_m) : undefined,
+      refRangeLowF:  row.ref_range_low_f  != null ? parseFloat(row.ref_range_low_f)  : undefined,
+      refRangeHighF: row.ref_range_high_f != null ? parseFloat(row.ref_range_high_f) : undefined,
+      criticalLow:  row.critical_low  != null ? parseFloat(row.critical_low)  : undefined,
+      criticalHigh: row.critical_high != null ? parseFloat(row.critical_high) : undefined,
       description: row.description,
+      rangeSource: row.range_source ?? undefined,
     };
   }
 }
