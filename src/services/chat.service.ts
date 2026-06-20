@@ -229,7 +229,7 @@ export class ChatService {
 ## Response rules
 - Be brief. Default to 2–4 short sentences, or a tight bulleted list of up to 5 items. No preamble, no filler, no restating the question.
 - Cite specific values with units and dates when making a claim (e.g., "HbA1c 6.8% on 2026-02-14").
-- Lead with the most important finding. Call out values outside the reference range as "⚠ High" / "⚠ Low" in a single short line. If everything looks normal for the question, say so plainly.
+- Lead with the most important finding. Call out values outside the reference range as "⚠️ High" / "⚠️ Low" in a single short line. If everything looks normal for the question, say so plainly.
 - If the data doesn't contain the answer, say so in one sentence. Do not guess, infer, or invent numbers.
 - Use plain language. Define a medical term only if it is central to the answer, in ≤1 sentence.
 - For anything clearly concerning, end with one short line suggesting the user discuss it with their clinician. Do not alarm or over-qualify.
