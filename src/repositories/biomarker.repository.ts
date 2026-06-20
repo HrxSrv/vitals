@@ -338,48 +338,12 @@ export class BiomarkerRepository {
       nameNormalized,
     });
 
-    const { data, error } = await supabase
-      .from('biomarkers')
-      .select(
-        `
-        *,
-        biomarker_definitions (
-          name_normalized,
-          display_name,
-          category,
-          unit,
-          ref_range_low,
-          ref_range_high,
-          ref_range_low_m,
-          ref_range_high_m,
-          ref_range_low_f,
-          ref_range_high_f,
-          critical_low,
-          critical_high,
-          description,
-          range_source
-        )
-      `
-      )
-      .eq('profile_id', profileId)
-      .eq('name_normalized', nameNormalized)
-      .order('report_date', { ascending: true });
-
-    if (error) {
-      logger.error('Failed to find historical biomarker values', {
-        error,
-        profileId,
-        nameNormalized,
-      });
-      throw new Error(`Failed to find biomarker history: ${error.message}`);
-    }
-
-    const mapped = data.map((row: Record<string, any>) => ({
-      ...this.mapToDomain(row),
-      definition: row.biomarker_definitions
-        ? this.mapDefinitionToDomain(row.biomarker_definitions)
-        : undefined,
-    }));
+    // The biomarkers↔biomarker_definitions FK was removed, so the old PostgREST
+    // embed (`select('*, biomarker_definitions(...)')`) no longer resolves and
+    // returns a 500. Reuse the RPC-backed lookup the dashboard already uses, then
+    // filter to this marker. (Dedup-per-report + sort happen below.)
+    const all = await this.findByProfileWithDefinitions(profileId);
+    const mapped = all.filter((b) => b.nameNormalized === nameNormalized);
 
     // Dedup by reportId: when one report has multiple method-variant rows for the
     // same nameNormalized, keep only the primary one so each report contributes
