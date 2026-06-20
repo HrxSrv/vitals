@@ -5,7 +5,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 
 // Public site origin used for absolute URLs (canonical, Open Graph, JSON-LD).
 // Set NEXT_PUBLIC_SITE_URL in production (e.g. https://vithos.app).
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://vithos.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://vithos.in';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
