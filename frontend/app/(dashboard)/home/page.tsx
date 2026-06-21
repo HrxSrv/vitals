@@ -10,6 +10,7 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { HealthSummaryCard } from '@/components/dashboard/HealthSummaryCard';
 import { BiomarkerGrid } from '@/components/dashboard/BiomarkerGrid';
 import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
+import { LogoMark } from '@/components/ui/Logo';
 import { UploadButton } from '@/components/reports/UploadButton';
 import { ReportCard } from '@/components/reports/ReportCard';
 import { LHMViewer } from '@/components/lhm/LHMViewer';
@@ -48,9 +49,7 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen">
       <header className="sticky-header px-4 lg:px-8 py-3 flex items-center justify-between gap-3 backdrop-blur-md bg-background/95">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0 lg:hidden">
-            <Leaf size={16} className="text-primary-600" />
-          </div>
+          <LogoMark className="w-7 h-7 flex-shrink-0 lg:hidden" />
           <div className="min-w-0">
             <p className="text-[10px] lg:text-xs text-muted-foreground font-medium tracking-tight-sm">Good day,</p>
             <p className="text-sm lg:text-base font-bold text-foreground leading-tight-heading tracking-tight-md truncate">

@@ -1,7 +1,8 @@
 'use client';
 
-import { Leaf, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { LogoMark } from '@/components/ui/Logo';
 import {
   ChatSessionsBody,
   NewChatButton,
@@ -46,12 +47,7 @@ export function ChatSessionsDrawer({
         <SheetTitle className="sr-only">Chat sessions</SheetTitle>
 
         <div className="flex items-center justify-between px-3 py-3">
-          <div
-            className="w-10 h-10 rounded-2xl bg-primary-100 flex items-center justify-center"
-            aria-label="Vithos"
-          >
-            <Leaf size={20} className="text-primary-600" />
-          </div>
+          <LogoMark className="w-10 h-10" />
           <SheetClose asChild>
             <button
               className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
