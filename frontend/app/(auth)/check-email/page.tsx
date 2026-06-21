@@ -2,7 +2,8 @@
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Leaf, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import { LogoMark } from '@/components/ui/Logo';
 import { Suspense } from 'react';
 
 function CheckEmailContent() {
@@ -13,9 +14,7 @@ function CheckEmailContent() {
     <div className="min-h-screen flex flex-col px-6 py-10">
       {/* Logo */}
       <div className="flex items-center gap-2 mb-10">
-        <div className="w-10 h-10 rounded-2xl bg-primary-500 flex items-center justify-center">
-          <Leaf size={20} className="text-white" />
-        </div>
+        <LogoMark className="w-8 h-8" />
         <span className="font-display text-2xl font-semibold text-foreground">Vithos</span>
       </div>
 

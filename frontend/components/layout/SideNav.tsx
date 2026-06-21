@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, TrendingUp, MessageCircle, User, Leaf } from 'lucide-react';
+import { LayoutDashboard, FileText, TrendingUp, MessageCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { UsageCard } from '@/components/dashboard/UsageCard';
+import { LogoMark } from '@/components/ui/Logo';
 
 const NAV_ITEMS = [
   { href: '/home',    label: 'Home',      icon: LayoutDashboard },
@@ -21,9 +22,7 @@ export function SideNav() {
     <aside className="hidden lg:flex flex-col w-60 shrink-0 h-screen sticky top-0 bg-white border-r border-border">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
-        <div className="w-8 h-8 rounded-xl bg-primary-100 flex items-center justify-center">
-          <Leaf size={16} className="text-primary-600" />
-        </div>
+        <LogoMark className="w-6 h-6" />
         <span className="font-display text-lg font-semibold text-foreground">Vithos</span>
       </div>
 

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Leaf, TrendingUp, MessageCircle, ArrowRight, Users, PlayCircle, Linkedin, Globe } from 'lucide-react';
 import { LandingRedirect } from '@/components/landing/LandingRedirect';
 import { HeroBanner } from '@/components/landing/HeroBanner';
+import { LogoMark } from '@/components/ui/Logo';
 
 export default function LandingPage() {
   return (
@@ -12,9 +13,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center">
-              <Leaf size={16} className="text-white" />
-            </div>
+            <LogoMark className="w-6 h-6" />
             <span className="font-display text-xl font-semibold text-foreground">Vithos</span>
           </div>
           <div className="flex items-center gap-3">
@@ -169,9 +168,7 @@ export default function LandingPage() {
       <footer className="border-t border-border mt-auto">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center">
-              <Leaf size={12} className="text-white" />
-            </div>
+            <LogoMark className="w-5 h-5" />
             <span className="text-sm font-semibold text-foreground">Vithos</span>
           </div>
           <div className="flex items-center gap-6 text-xs text-muted-foreground">

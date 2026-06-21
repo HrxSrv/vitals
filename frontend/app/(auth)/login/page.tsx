@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Leaf, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { LogoMark } from '@/components/ui/Logo';
 import { useAuthStore } from '@/lib/store/authStore';
 import { loginSchema, LoginFormData } from '@/lib/utils/validators';
 import { cn } from '@/lib/utils/cn';
@@ -42,9 +43,7 @@ function LoginForm() {
     <div className="min-h-screen flex flex-col px-6 py-10">
       {/* Logo */}
       <div className="flex items-center gap-2 mb-12">
-        <div className="w-10 h-10 rounded-2xl bg-primary-500 flex items-center justify-center">
-          <Leaf size={20} className="text-white" />
-        </div>
+        <LogoMark className="w-8 h-8" />
         <span className="font-display text-2xl font-semibold text-foreground">Vithos</span>
       </div>
 
