@@ -249,7 +249,7 @@ ON CONFLICT (name_normalized) DO NOTHING;
 INSERT INTO biomarker_definitions
   (name_normalized, display_name, category, unit,
    ref_range_low, ref_range_high, critical_low, critical_high,
-   ref_range_low_m, ref_range_high_m,
+   ref_range_low_m, ref_range_high_m, ref_range_low_f, ref_range_high_f,
    description, range_source)
 VALUES
   ('psa', 'PSA (Prostate-Specific Antigen)', 'hormones', 'ng/mL',
