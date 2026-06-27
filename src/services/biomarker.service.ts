@@ -317,27 +317,8 @@ ${ocrMarkdown}`;
       })
     );
 
-    // Store in database. The DB unit-integrity trigger silently redirects any
-    // row whose unit is dimensionally incompatible with its slug's catalog unit
-    // into the biomarkers_unresolved quarantine table (so a glucose value can't
-    // be plotted as a liver enzyme). Such rows are absent from the result, so we
-    // surface the gap here for observability.
+    // Store in database
     const storedBiomarkers = await biomarkerRepository.createBatch(uniqueBiomarkers);
-
-    const quarantined = uniqueBiomarkers.length - storedBiomarkers.length;
-    if (quarantined > 0) {
-      const storedKeys = new Set(
-        storedBiomarkers.map((b) => `${b.nameNormalized}::${Number(b.value).toFixed(4)}::${b.unit}`),
-      );
-      const dropped = uniqueBiomarkers
-        .filter((b) => !storedKeys.has(`${b.nameNormalized}::${Number(b.value).toFixed(4)}::${b.unit ?? ''}`))
-        .map((b) => ({ name: b.name, nameNormalized: b.nameNormalized, unit: b.unit, value: b.value }));
-      logger.warn('Biomarkers quarantined by unit-integrity gate', {
-        reportId,
-        quarantined,
-        dropped,
-      });
-    }
 
     logger.info('Biomarkers stored successfully', {
       count: storedBiomarkers.length,
